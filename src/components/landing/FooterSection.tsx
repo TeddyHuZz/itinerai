@@ -14,7 +14,7 @@ export const FooterSection: React.FC = () => {
 
   return (
     <footer className="w-full bg-white select-none">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12">
+      <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. "TRY ITINERAI TODAY" CALL TO ACTION (Jitter Exact Style)               */}
         {/* ========================================================================= */}
@@ -111,7 +111,7 @@ export const FooterSection: React.FC = () => {
         {/* ========================================================================= */}
         {/* 3. SOLID BLACK NEWSLETTER BANNER (Jitter Exact Style)                     */}
         {/* ========================================================================= */}
-        <div className="w-full rounded-[32px] sm:rounded-[44px] bg-black text-white p-8 sm:p-14 md:p-16 mb-16 flex flex-col md:flex-row items-center justify-between gap-10">
+        <div className="w-full rounded-4xl bg-black text-white p-8 sm:p-14 md:p-16 mb-16 flex flex-col md:flex-row items-center justify-between gap-10">
           {/* Left Graffiti Cartoon Bubble Logo Sticker */}
           <div className="flex items-center justify-center">
             <div

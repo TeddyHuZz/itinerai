@@ -50,7 +50,7 @@ const DETAIL_ITEMS: FeatureDetailItem[] = [
 export const FeaturesDetailSection: React.FC = () => {
   return (
     <section className="w-full bg-white pt-24 sm:pt-36 pb-28 select-none" id="details">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12">
+      <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* Header with Title and Right Action Button */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-[-0.035em] text-zinc-950 leading-[1.05] max-w-md text-left">

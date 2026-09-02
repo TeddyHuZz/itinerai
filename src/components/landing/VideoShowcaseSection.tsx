@@ -14,7 +14,7 @@ export const VideoShowcaseSection: React.FC<VideoShowcaseSectionProps> = ({
 }) => {
   return (
     <section className="w-full bg-white pt-24 sm:pt-36 pb-28 select-none" id="product">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12">
+      <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. HUGE BOLD HEADING (Jitter Exact Style)                                */}
         {/* ========================================================================= */}
@@ -27,8 +27,8 @@ export const VideoShowcaseSection: React.FC<VideoShowcaseSectionProps> = ({
         {/* ========================================================================= */}
         {/* 2. LARGE VIDEO DEMONSTRATION CANVAS (Light Gray Container + Dark Frame)   */}
         {/* ========================================================================= */}
-        <div className="w-full rounded-[32px] sm:rounded-[44px] bg-[#f5f5f7] p-6 sm:p-14 md:p-20 flex items-center justify-center overflow-hidden">
-          <div className="w-full max-w-4xl aspect-[16/10] sm:aspect-[16/9] bg-[#111111] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-800 group">
+        <div className="w-full rounded-4xl sm:rounded-[44px] bg-[#f5f5f7] p-6 sm:p-14 md:p-20 flex items-center justify-center overflow-hidden">
+          <div className="w-full max-w-4xl aspect-16/10 sm:aspect-video bg-[#111111] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-800 group">
             {videoSrc ? (
               <video
                 src={videoSrc}

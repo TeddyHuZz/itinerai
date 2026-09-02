@@ -220,7 +220,7 @@ export const FlippingBrandLogos: React.FC = () => {
       {currentSet.map((brand, colIdx) => (
         <div
           key={colIdx}
-          className="h-10 min-w-[100px] sm:min-w-[120px] flex items-center justify-center relative overflow-hidden"
+          className="h-10 min-w-25 sm:min-w-30 flex items-center justify-center relative overflow-hidden"
           style={{ perspective: "1000px" }}
         >
           <AnimatePresence mode="wait">

@@ -116,7 +116,7 @@ const STACK_CARDS: StackCard[] = [
 export const StackedCardsSection: React.FC = () => {
   return (
     <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none relative" id="features-stack">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12">
+      <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. SECTION HEADER (Jitter Exact Style)                                   */}
         {/* ========================================================================= */}
@@ -151,7 +151,7 @@ export const StackedCardsSection: React.FC = () => {
               }}
             >
               <div
-                className={`w-full rounded-[36px] sm:rounded-[44px] ${card.bgColor} p-8 sm:p-12 shadow-2xl shadow-zinc-950/15 border border-black/5 flex flex-col justify-between overflow-hidden min-h-[500px] sm:min-h-[560px]`}
+                className={`w-full rounded-4xl sm:rounded-[44px] ${card.bgColor} p-8 sm:p-12 shadow-2xl shadow-zinc-950/15 border border-black/5 flex flex-col justify-between overflow-hidden min-h-125 sm:min-h-140`}
               >
                 {/* Header tag & description */}
                 <div className="text-left">

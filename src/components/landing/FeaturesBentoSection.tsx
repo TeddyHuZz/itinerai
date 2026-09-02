@@ -127,7 +127,7 @@ const BENTO_CARDS: BentoFeatureCard[] = [
 export const FeaturesBentoSection: React.FC = () => {
   return (
     <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none" id="features">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12">
+      <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. SECTION HEADER (Jitter Exact Style)                                   */}
         {/* ========================================================================= */}
@@ -164,7 +164,7 @@ export const FeaturesBentoSection: React.FC = () => {
           {BENTO_CARDS.map((card) => (
             <div
               key={card.id}
-              className="rounded-[32px] sm:rounded-[40px] bg-[#f5f5f7] p-8 sm:p-10 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:shadow-xl group"
+              className="rounded-4xl bg-[#f5f5f7] p-8 sm:p-10 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:shadow-xl group"
             >
               {/* Artwork Container */}
               <div className="w-full mb-8">{card.renderArtwork()}</div>

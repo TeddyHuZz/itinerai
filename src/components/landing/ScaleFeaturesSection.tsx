@@ -4,7 +4,7 @@ import { Wand2, Grid, Layers, FileDown } from "lucide-react";
 export const ScaleFeaturesSection: React.FC = () => {
   return (
     <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none" id="scale">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12">
+      <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. TOP ROW: LEFT HEADING + 2 RIGHT FEATURE CARDS                          */}
         {/* ========================================================================= */}
@@ -27,7 +27,7 @@ export const ScaleFeaturesSection: React.FC = () => {
 
           {/* Card 1: Magic Import / AI Chat */}
           <div className="flex flex-col text-left">
-            <div className="w-full h-80 rounded-[32px] bg-[#f5f5f7] p-6 flex items-center justify-center overflow-hidden mb-5">
+            <div className="w-full h-80 rounded-4xl bg-[#f5f5f7] p-6 flex items-center justify-center overflow-hidden mb-5">
               {/* Dark AI Assistant Chat Modal */}
               <div className="w-64 bg-[#212124] text-white rounded-2xl p-4 shadow-2xl border border-zinc-700/60 flex flex-col justify-between h-56">
                 <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium border-b border-zinc-800 pb-2">
@@ -65,7 +65,7 @@ export const ScaleFeaturesSection: React.FC = () => {
 
           {/* Card 2: Auto-resize, auto-translate / Currency & Timezones */}
           <div className="flex flex-col text-left">
-            <div className="w-full h-80 rounded-[32px] bg-[#f5f5f7] p-6 flex items-center justify-center overflow-hidden mb-5">
+            <div className="w-full h-80 rounded-4xl bg-[#f5f5f7] p-6 flex items-center justify-center overflow-hidden mb-5">
               {/* Artboard Frame with Bounding Box */}
               <div className="relative p-2 bg-white rounded-xl shadow-2xl border border-zinc-200">
                 <div className="text-[9px] font-mono text-violet-600 font-bold mb-1 flex items-center gap-1">
@@ -107,7 +107,7 @@ export const ScaleFeaturesSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Card 3: Create Component / Reusable Trip Modules */}
           <div className="flex flex-col text-left">
-            <div className="w-full h-80 rounded-[32px] bg-[#0d0d0f] p-6 flex items-center justify-center overflow-hidden mb-5 relative">
+            <div className="w-full h-80 rounded-4xl bg-[#0d0d0f] p-6 flex items-center justify-center overflow-hidden mb-5 relative">
               <div className="absolute inset-0 bg-radial from-violet-900/30 via-transparent to-transparent pointer-events-none" />
 
               {/* Purple Create Component Button (Jitter Style) */}
@@ -130,7 +130,7 @@ export const ScaleFeaturesSection: React.FC = () => {
 
           {/* Card 4: Multi-format Sync & Export */}
           <div className="flex flex-col text-left">
-            <div className="w-full h-80 rounded-[32px] bg-[#38bdf8] p-6 flex items-center justify-center overflow-hidden mb-5">
+            <div className="w-full h-80 rounded-4xl bg-[#38bdf8] p-6 flex items-center justify-center overflow-hidden mb-5">
               {/* Document List UI */}
               <div className="w-72 bg-white/90 backdrop-blur-md rounded-2xl p-5 shadow-2xl text-zinc-900 text-left border border-white/40">
                 <div className="flex items-center justify-between text-xs font-bold border-b border-zinc-200 pb-2 mb-3">

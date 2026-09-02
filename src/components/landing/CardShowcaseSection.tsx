@@ -19,7 +19,7 @@ const SHOWCASE_CARDS: ShowcaseCard[] = [
     avatarText: "rico",
     avatarBg: "bg-[#0051ff]",
     renderArtwork: () => (
-      <div className="w-[240px] sm:w-[260px] h-[240px] sm:h-[260px] bg-zinc-200 rounded-xl shadow-2xl p-3 flex items-center justify-center overflow-hidden relative border border-zinc-300">
+      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-zinc-200 rounded-xl shadow-2xl p-3 flex items-center justify-center overflow-hidden relative border border-zinc-300">
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Background card fan */}
           <div className="absolute -left-2 w-28 h-36 bg-zinc-800 rounded-lg -rotate-12 shadow-lg flex items-center justify-center text-white text-[9px] font-bold">
@@ -45,7 +45,7 @@ const SHOWCASE_CARDS: ShowcaseCard[] = [
     avatarText: "Itinerai",
     avatarBg: "bg-black",
     renderArtwork: () => (
-      <div className="w-[240px] sm:w-[260px] h-[240px] sm:h-[260px] bg-[#1a1a1a] rounded-xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-800">
+      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-[#1a1a1a] rounded-xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-800">
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Stylized statue warrior & horse graphic */}
           <svg
@@ -68,7 +68,7 @@ const SHOWCASE_CARDS: ShowcaseCard[] = [
     avatarText: "Itinerai",
     avatarBg: "bg-black",
     renderArtwork: () => (
-      <div className="w-[240px] sm:w-[260px] h-[240px] sm:h-[260px] bg-[#0047ff] text-white rounded-xl shadow-2xl p-5 flex flex-col justify-between overflow-hidden relative">
+      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-[#0047ff] text-white rounded-xl shadow-2xl p-5 flex flex-col justify-between overflow-hidden relative">
         <div className="flex justify-between items-center text-[10px] font-bold tracking-wider text-white/80">
           <span>❖ Mango</span>
           <span className="font-mono text-[9px]">juliemang.com</span>
@@ -100,7 +100,7 @@ const SHOWCASE_CARDS: ShowcaseCard[] = [
     avatarText: "Itinerai",
     avatarBg: "bg-black",
     renderArtwork: () => (
-      <div className="w-[240px] sm:w-[260px] h-[240px] sm:h-[260px] bg-white rounded-xl shadow-2xl p-4 flex flex-col justify-between overflow-hidden relative border border-blue-100">
+      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-white rounded-xl shadow-2xl p-4 flex flex-col justify-between overflow-hidden relative border border-blue-100">
         <div className="text-[#0026ff] font-black leading-[0.82] tracking-tighter text-[44px] select-none uppercase">
           <div className="scale-y-125 origin-top">LOVE</div>
           <div className="bg-[#0026ff] text-white px-1 my-1 scale-y-110">HATE</div>
@@ -120,7 +120,7 @@ const SHOWCASE_CARDS: ShowcaseCard[] = [
     avatarText: "Itinerai",
     avatarBg: "bg-black",
     renderArtwork: () => (
-      <div className="w-[240px] sm:w-[260px] h-[240px] sm:h-[260px] bg-black rounded-xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-200">
+      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-black rounded-xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-200">
         <div className="absolute inset-0 bg-radial from-zinc-200 via-zinc-400 to-zinc-950 opacity-90" />
         
         {/* Concentric glass distortion rings */}
@@ -149,7 +149,7 @@ const SHOWCASE_CARDS: ShowcaseCard[] = [
     avatarText: "Itinerai",
     avatarBg: "bg-black",
     renderArtwork: () => (
-      <div className="w-[240px] sm:w-[260px] h-[240px] sm:h-[260px] bg-[#0047ff] text-white rounded-xl shadow-2xl p-5 flex flex-col justify-between overflow-hidden relative">
+      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-[#0047ff] text-white rounded-xl shadow-2xl p-5 flex flex-col justify-between overflow-hidden relative">
         <div>
           <h4 className="text-[22px] font-extrabold leading-[1.05] tracking-tight">
             Livestream
@@ -191,7 +191,7 @@ export const CardShowcaseSection: React.FC = () => {
         {SHOWCASE_CARDS.map((card) => (
           <div
             key={card.id}
-            className="w-[340px] sm:w-[380px] md:w-[410px] h-[460px] sm:h-[490px] rounded-[32px] bg-[#f5f5f7] p-8 sm:p-9 flex flex-col justify-between items-center shrink-0 transition-transform duration-300 hover:scale-[1.015] cursor-pointer"
+            className="w-85 sm:w-95 md:w-102.5 h-115 sm:h-122.5 rounded-4xl bg-[#f5f5f7] p-8 sm:p-9 flex flex-col justify-between items-center shrink-0 transition-transform duration-300 hover:scale-[1.015] cursor-pointer"
           >
             {/* Centered Artwork Container */}
             <div className="w-full flex-1 flex items-center justify-center">

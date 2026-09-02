@@ -1,122 +1,52 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Navbar } from "@/components/landing/Navbar";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { CardShowcaseSection } from "@/components/landing/CardShowcaseSection";
+import { VideoShowcaseSection } from "@/components/landing/VideoShowcaseSection";
+import { StackedCardsSection } from "@/components/landing/StackedCardsSection";
+import { FeaturesBentoSection } from "@/components/landing/FeaturesBentoSection";
+import { FeaturesDetailSection } from "@/components/landing/FeaturesDetailSection";
+import { TestimonialQuoteSection } from "@/components/landing/TestimonialQuoteSection";
+import { ScaleFeaturesSection } from "@/components/landing/ScaleFeaturesSection";
+import { TestimonialQuoteSecondSection } from "@/components/landing/TestimonialQuoteSecondSection";
+import { FooterSection } from "@/components/landing/FooterSection";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-purple-200 selection:text-zinc-950">
+      {/* Dynamic Floating Navbar on Scroll */}
+      <Navbar />
 
-      <div className="ticks"></div>
+      <main>
+        {/* Section 1: Jitter Exact Hero with 3D Flipping Logos */}
+        <HeroSection />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Section 2: Infinite Left-Sliding Cards */}
+        <CardShowcaseSection />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Section 3: Huge Heading + Video Showcase Canvas */}
+        <VideoShowcaseSection />
+
+        {/* Section 4: Scroll-Driven Stacked Cards (Slide Up One by One) */}
+        <StackedCardsSection />
+
+        {/* Section 5: Supercharge Your Creativity Bento 2x2 Grid */}
+        <FeaturesBentoSection />
+
+        {/* Section 6: Details Worth Obsessing Over 6-Grid */}
+        <FeaturesDetailSection />
+
+        {/* Section 7: Massive Testimonial Quote with Cyan Marker (Deliveroo) */}
+        <TestimonialQuoteSection />
+
+        {/* Section 8: Where Groups Plan at Scale */}
+        <ScaleFeaturesSection />
+
+        {/* Section 9: Second Testimonial Quote with 3D Comic Stroke (Perplexity) */}
+        <TestimonialQuoteSecondSection />
+      </main>
+
+      {/* Section 10: "Try Itinerai today" CTA + 5-Col Footer Links + Black Newsletter Banner */}
+      <FooterSection />
+    </div>
+  );
 }
-
-export default App

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { ItineraiLogo } from "@/components/ui/ItineraiLogo";
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,16 +35,10 @@ export const Navbar: React.FC = () => {
               : "mt-0 max-w-7xl w-full px-8 sm:px-12 h-20 bg-white"
           }`}
         >
-          {/* Brand Wordmark (Jitter Exact Style) */}
+          {/* Brand Wordmark & Icon Badge */}
           <div className="flex items-center gap-10">
-            <a href="#" className="flex items-center">
-              <span
-                className={`font-extrabold tracking-[-0.03em] text-zinc-950 font-sans transition-all ${
-                  isScrolled ? "text-[22px]" : "text-[26px]"
-                }`}
-              >
-                Itinerai
-              </span>
+            <a href="#" className="flex items-center gap-3 group">
+              <ItineraiLogo size={isScrolled ? "sm" : "md"} />
             </a>
 
             {/* Center Navigation Links */}

@@ -502,11 +502,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   }, [hotelSort, hotelFilter]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-zinc-900 font-sans selection:bg-[#963314]/20 selection:text-[#963314] flex flex-col">
+    <div
+      className={`bg-[#f8f9fa] text-zinc-900 font-sans selection:bg-[#963314]/20 selection:text-[#963314] flex flex-col ${
+        currentNav === "team" ? "h-screen overflow-hidden" : "min-h-screen"
+      }`}
+    >
       {/* ======================================================================= */}
       {/* 1. TOP HEADER (Responsive on all screens)                               */}
       {/* ======================================================================= */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-6 lg:px-8 py-3">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-6 lg:px-8 py-3 shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Brand & User Profile */}
           <div className="flex items-center gap-3 sm:gap-4">

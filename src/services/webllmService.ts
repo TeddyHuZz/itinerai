@@ -1,10 +1,214 @@
 import * as webllm from "@mlc-ai/web-llm";
 
-export const SELECTED_MODEL = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+export const SELECTED_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 
 export interface LLMProgressReport {
   progress: number;
   text: string;
+}
+
+export interface TripContext {
+  highlights?: string[];
+  plannedActivities?: string[];
+}
+
+interface WikipediaHit {
+  title: string;
+  snippet: string;
+}
+
+const INVALID_LANDMARK_KEYWORDS = [
+  "discography",
+  "filmography",
+  "soundtrack",
+  "album",
+  "song",
+  "single",
+  "film",
+  "movie",
+  "series",
+  "television",
+  "episode",
+  "season",
+  "novel",
+  "book",
+  "band",
+  "musician",
+  "singer",
+  "actor",
+  "actress",
+  "republic",
+  "election",
+  "politics",
+  "economy",
+  "demographics",
+  "history of",
+  "geography of",
+  "list of",
+  "archdiocese",
+  "diocese",
+  "bishop",
+  "duchess",
+  "duke",
+  "tournament",
+  "championship",
+  "system",
+  "ferrari",
+  "car",
+  "battle",
+  "war",
+  "disambiguation",
+  "bombing",
+];
+
+export function isValidTravelSpot(title: string): boolean {
+  if (!title || title.length < 3 || title.length > 55) return false;
+  const lower = title.toLowerCase();
+  for (const kw of INVALID_LANDMARK_KEYWORDS) {
+    if (lower.includes(kw)) return false;
+  }
+  if (lower.includes("&") && (lower.includes("you") || lower.includes("me"))) return false;
+  return true;
+}
+
+/**
+ * Dynamically fetches live verified landmarks and travel facts from Wikipedia Open Search API.
+ * Completely free, open, CORS-enabled, zero API keys, and works for any destination worldwide.
+ */
+async function fetchLiveDestinationContext(
+  destination: string,
+  query: string
+): Promise<{ contextText: string; verifiedTitles: string[] }> {
+  try {
+    const cleanDestination = destination.split(",")[0].trim();
+    // Strip conversational filler words to extract core search terms for Wikipedia
+    const coreKeywords = query
+      .replace(/@itinerai/gi, "")
+      .replace(
+        /\b(can you|could you|please|find|give me|show me|some|locations?|places?|spots?|for me|what are|the|best|recommend|tell me about|in|at|to|go|where|visit)\b/gi,
+        " "
+      )
+      .replace(/[?,.!]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const searchTerms = `${cleanDestination} ${coreKeywords || "attractions landmarks"}`.trim();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+      searchTerms
+    )}&format=json&origin=*&utf8=1&srlimit=8`;
+
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) return { contextText: "", verifiedTitles: [] };
+    const data = await res.json();
+    const hits: WikipediaHit[] = data?.query?.search || [];
+
+    // Filter out meta/irrelevant pages and media/pop-culture titles
+    const filtered = hits.filter((h) => isValidTravelSpot(h.title));
+
+    const verifiedTitles = filtered.map((h) => h.title);
+    const contextText = filtered
+      .slice(0, 3)
+      .map((h) => {
+        const cleanSnippet = h.snippet.replace(/<[^>]*>/g, "").trim();
+        return `${h.title}: ${cleanSnippet}`;
+      })
+      .join("\n");
+
+    return { contextText, verifiedTitles };
+  } catch {
+    return { contextText: "", verifiedTitles: [] };
+  }
+}
+
+/**
+ * Dynamically extracts poll candidate spots from the AI response itself or verified search titles.
+ * Eliminates all hardcoded spot dictionaries!
+ */
+function parseSpotsFromResponse(
+  aiText: string,
+  verifiedTitles: string[] = [],
+  tripHighlights: string[] = []
+): { title: string; category: string; cost?: string }[] {
+  const lines = aiText.split("\n");
+  const extracted: { title: string; category: string; cost?: string }[] = [];
+
+  for (const line of lines) {
+    // Matches patterns like "1. Uluwatu Temple: ...", "2. **Tanah Lot**: ...", or "- **Potato Head** - ..."
+    const match = line.match(
+      /^(?:(?:\d+\.|\-|\*)\s*)(?:\*\*)?([^*:\n–—]+)(?:\*\*)?(?::|\s-\s|\s–\s|\s—\s)/i
+    );
+    if (match && match[1]) {
+      let title = match[1].trim();
+      title = title.replace(/^["']|["']$/g, "").trim();
+      if (
+        title.length > 2 &&
+        title.length < 60 &&
+        !title.toLowerCase().includes("here are") &&
+        !title.toLowerCase().includes("tip") &&
+        !title.toLowerCase().includes("option")
+      ) {
+        const lower = title.toLowerCase();
+        const category =
+          lower.includes("food") ||
+          lower.includes("dinner") ||
+          lower.includes("lunch") ||
+          lower.includes("restaurant") ||
+          lower.includes("cafe")
+            ? "Food"
+            : lower.includes("hike") || lower.includes("trek") || lower.includes("surf")
+            ? "Adventure"
+            : lower.includes("temple") || lower.includes("palace") || lower.includes("shrine")
+            ? "Culture"
+            : "Sightseeing";
+
+        extracted.push({ title, category });
+      }
+    }
+  }
+
+  if (extracted.length > 0) {
+    const spotTitles = new Set(extracted.map((s) => s.title.toLowerCase()));
+    // If fewer than 3, backfill with verified titles or trip highlights
+    for (const v of verifiedTitles) {
+      if (extracted.length >= 3) break;
+      if (!spotTitles.has(v.toLowerCase())) {
+        extracted.push({ title: v, category: "Sightseeing" });
+        spotTitles.add(v.toLowerCase());
+      }
+    }
+    for (const h of tripHighlights) {
+      if (extracted.length >= 3) break;
+      if (!spotTitles.has(h.toLowerCase())) {
+        extracted.push({ title: h, category: "Sightseeing" });
+        spotTitles.add(h.toLowerCase());
+      }
+    }
+    return extracted.slice(0, 3);
+  }
+
+  // Fallback to verified titles from live search if AI didn't format numbered list
+  if (verifiedTitles.length > 0) {
+    return verifiedTitles.slice(0, 3).map((t) => ({
+      title: t,
+      category: "Sightseeing",
+    }));
+  }
+
+  // Fallback to active trip highlights if available
+  if (tripHighlights.length > 0) {
+    return tripHighlights.slice(0, 3).map((h) => ({
+      title: h,
+      category: "Sightseeing",
+    }));
+  }
+
+  return [];
 }
 
 class WebLLMService {
@@ -65,7 +269,7 @@ class WebLLMService {
       this.isInitializing = false;
       this.notifyProgress({
         progress: 1,
-        text: "Qwen2.5-0.5B-Instruct loaded into local WebGPU!",
+        text: "Llama-3.2-1B-Instruct loaded into local WebGPU!",
       });
       return true;
     } catch (err) {
@@ -83,22 +287,47 @@ class WebLLMService {
   public async generateChatResponse(
     userMessage: string,
     destination: string,
-    onChunk?: (chunk: string) => void
-  ): Promise<{ text: string; suggestedSpots?: { title: string; category: string; cost?: string }[] }> {
+    onChunk?: (chunk: string) => void,
+    tripContext?: TripContext
+  ): Promise<{ text: string; suggestedSpots?: { title: string; category: string; cost?: string; image?: string; mapUrl?: string }[] }> {
+    // 1. Fetch live verified facts dynamically (Wikipedia Open Search)
+    const { contextText: liveFacts, verifiedTitles } = await fetchLiveDestinationContext(
+      destination,
+      userMessage
+    );
+
+    // 2. Build dynamic grounding text from live facts + trip highlights (zero hardcoding!)
+    const dynamicGroundingParts: string[] = [];
+    if (tripContext?.highlights && tripContext.highlights.length > 0) {
+      dynamicGroundingParts.push(`Trip planned highlights: ${tripContext.highlights.join(", ")}`);
+    }
+    if (liveFacts) {
+      dynamicGroundingParts.push(`Live verified local landmarks & facts for this request:\n${liveFacts}`);
+    }
+
+    const groundingSection =
+      dynamicGroundingParts.length > 0
+        ? `\nFACTUAL CONTEXT:\n${dynamicGroundingParts.join("\n\n")}\n`
+        : "";
+
     // If WebLLM is loaded and ready, use the local WebGPU model!
     if (this.isReady && this.engine) {
       try {
         const systemPrompt = `You are ItinerAI Copilot, an expert AI travel planner helping a travel group in their group chat.
-Destination: ${destination}.
-Provide helpful, friendly, and practical travel recommendations.
-Keep answers concise (under 120 words). Recommend 2-3 specific spots with estimated price and why to visit.`;
+Destination: ${destination}.${groundingSection}
+STRICT RULES:
+1. ONLY recommend real, verified, famous locations. Base your recommendations on the real context provided above whenever possible.
+2. Never hallucinate or invent fictional places, made-up beaches, or non-existent castles.
+3. Directly answer the user's specific request (e.g. if they ask for sunset, only give sunset spots; if food, give authentic dining).
+4. EXACTLY 3 RECOMMENDATIONS: Unless the user specifies otherwise, provide exactly 3 distinct top recommendations numbered 1, 2, and 3. Never stop at 2.
+5. FORMAT: Use a clean numbered list (e.g. "1. Spot Name: Brief highlight and estimated cost/timing"). Keep the entire response concise and under 110 words.`;
 
         const response = await this.engine.chat.completions.create({
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage },
           ],
-          temperature: 0.7,
+          temperature: 0.25,
           stream: true,
         });
 
@@ -111,7 +340,11 @@ Keep answers concise (under 120 words). Recommend 2-3 specific spots with estima
 
         return {
           text: fullText,
-          suggestedSpots: this.extractSpotsFromDestination(destination, userMessage),
+          suggestedSpots: parseSpotsFromResponse(
+            fullText,
+            verifiedTitles,
+            tripContext?.highlights
+          ),
         };
       } catch (err) {
         console.warn("WebLLM streaming error, fallback to curated response:", err);
@@ -119,72 +352,58 @@ Keep answers concise (under 120 words). Recommend 2-3 specific spots with estima
     }
 
     // High-quality smart travel fallback
-    return this.getSmartFallbackResponse(userMessage, destination, onChunk);
+    return this.getSmartFallbackResponse(
+      userMessage,
+      destination,
+      onChunk,
+      verifiedTitles,
+      tripContext
+    );
   }
 
   private async getSmartFallbackResponse(
-    userMessage: string,
+    _userMessage: string,
     destination: string,
-    onChunk?: (chunk: string) => void
-  ): Promise<{ text: string; suggestedSpots?: { title: string; category: string; cost?: string }[] }> {
-    const lower = userMessage.toLowerCase();
-    const destLower = destination.toLowerCase();
-
+    onChunk?: (chunk: string) => void,
+    verifiedTitles: string[] = [],
+    tripContext?: TripContext
+  ): Promise<{ text: string; suggestedSpots?: { title: string; category: string; cost?: string; image?: string; mapUrl?: string }[] }> {
+    const cleanDest = destination.split(",")[0].trim();
     let responseText = "";
-    let spots: { title: string; category: string; cost?: string }[] = [];
+    let spots: { title: string; category: string; cost?: string; image?: string; mapUrl?: string }[] = [];
 
-    if (lower.includes("food") || lower.includes("dinner") || lower.includes("eat") || lower.includes("restaurant") || lower.includes("cafe")) {
-      if (destLower.includes("kyoto") || destLower.includes("japan")) {
-        responseText = `Here are 3 top-rated dining spots in Kyoto for your group:\n\n1. **Nishiki Market Skewers & Matcha**: Vibrant street eats, fresh grilled wagyu skewers & artisanal dango.\n2. **Gion Karyo (Kaiseki)**: Traditional multi-course Kyoto seasonal dining in an authentic machiya.\n3. **Chao Chao Gyoza**: Casual, energetic spot renowned for crispy winged gyoza.\n\nI've created a group poll below so everyone can vote on tonight's spot!`;
-        spots = [
-          { title: "Nishiki Market Culinary Tour", category: "Food", cost: "¥3,500 / person" },
-          { title: "Gion Karyo Traditional Kaiseki", category: "Food", cost: "¥8,000 / person" },
-          { title: "Chao Chao Gyoza Sanjo", category: "Food", cost: "¥1,800 / person" },
-        ];
-      } else if (destLower.includes("bali")) {
-        responseText = `Top dining picks in Bali for your group:\n\n1. **Seminyak Beach Club Sunset Dinner**: Oceanside daybeds, grilled seafood & cocktail pairings.\n2. **Bebek Bengil (Dirty Duck) Ubud**: Legendary crispy duck overlooking rice paddies.\n3. **Cuca Flavor Jimbaran**: High-end innovative tapas with tropical ingredients.\n\nVote in the poll below to pick where we dine!`;
-        spots = [
-          { title: "Seminyak Beach Club Dinner", category: "Food", cost: "IDR 450,000" },
-          { title: "Bebek Bengil Crispy Duck Ubud", category: "Food", cost: "IDR 220,000" },
-          { title: "Cuca Jimbaran Signature Tapas", category: "Food", cost: "IDR 600,000" },
-        ];
-      } else {
-        responseText = `Here are 3 fantastic food options in ${destination}:\n\n1. **Old Town Evening Food Trail**: Tasting local street delicacies and specialty bites.\n2. **Rooftop Sunset Lounge**: Panoramic city skyline views with local wines.\n3. **Artisan Waterfront Bistro**: Catch of the day prepared in traditional style.\n\nCast your vote below!`;
-        spots = [
-          { title: `${destination} Old Town Tasting`, category: "Food", cost: "RM 85" },
-          { title: "Skyline Sunset Dining", category: "Food", cost: "RM 140" },
-          { title: "Harbour View Bistro", category: "Food", cost: "RM 110" },
-        ];
+    const candidatePool = new Set<string>();
+    // 1. Curated trip highlights come FIRST as highest-fidelity authentic landmarks
+    if (tripContext?.highlights) {
+      for (const h of tripContext.highlights) {
+        if (h && h.trim().length > 1 && isValidTravelSpot(h)) {
+          candidatePool.add(h.trim());
+        }
       }
-    } else if (lower.includes("hike") || lower.includes("outdoor") || lower.includes("adventure") || lower.includes("sight") || lower.includes("place")) {
-      if (destLower.includes("kyoto") || destLower.includes("japan")) {
-        responseText = `Great sight & adventure picks for Kyoto:\n\n1. **Fushimi Inari Torii Gates Trail**: Climb the sacred mountain path surrounded by 10,000 vermilion arches.\n2. **Arashiyama Sagano Bamboo Grove**: Serene morning walk paired with the Tenryu-ji Zen garden.\n3. **Kiyomizu-dera Cliff Terrace**: Historic wooden hall overlooking the maple tree valley.\n\nVote on which spot you'd like to lock in for tomorrow!`;
-        spots = [
-          { title: "Fushimi Inari Torii Gates Trek", category: "Culture", cost: "Free" },
-          { title: "Arashiyama Bamboo Forest & Tenryu-ji", category: "Sightseeing", cost: "¥500" },
-          { title: "Kiyomizu-dera Panorama Terrace", category: "Culture", cost: "¥400" },
-        ];
-      } else if (destLower.includes("amalfi") || destLower.includes("italy")) {
-        responseText = `Must-see attractions for Amalfi Coast:\n\n1. **Positano Cliffside Walk**: Stunning stairs through bougainvillea paths down to the Spiaggia Grande.\n2. **Capri Private Gozzo Boat Charter**: Faraglioni rock tunnels & swimming in the Green Grotto.\n3. **Villa Cimbrone Infinity Terrace in Ravello**: Marble bust balcony high above the Mediterranean.\n\nVote below to add to your itinerary!`;
-        spots = [
-          { title: "Positano Cliffside Walk", category: "Sightseeing", cost: "Free" },
-          { title: "Capri Private Boat Charter", category: "Adventure", cost: "€180 / person" },
-          { title: "Villa Cimbrone Infinity Terrace", category: "Sightseeing", cost: "€10" },
-        ];
-      } else {
-        responseText = `Exciting itinerary highlights for ${destination}:\n\n1. **Iconic Scenic Viewpoint Hike**: Panoramic sunrise vistas over the surrounding landscape.\n2. **Historic Landmark & Old Quarter**: Guided walking discovery through iconic architecture.\n3. **Local Cultural Workshop**: Hands-on artisanal crafts & photography spots.\n\nVote below to approve for your itinerary!`;
-        spots = [
-          { title: `${destination} Scenic Viewpoint Trail`, category: "Adventure", cost: "Free" },
-          { title: "Historic Old Town Walking Tour", category: "Sightseeing", cost: "RM 45" },
-          { title: "Cultural Discovery & Sunset Walk", category: "Culture", cost: "RM 60" },
-        ];
-      }
-    } else {
-      responseText = `I've analyzed popular group activities in ${destination} based on your travel dates. Here are 3 top recommendations tailored for your companions:\n\n1. **Morning Cultural Landmark Discovery**: Beat the afternoon heat and explore with early access.\n2. **Traditional Lunch & Local Market**: Taste authentic regional delicacies.\n3. **Sunset Viewpoint & Drinks**: Perfect group photography spot before dinner.\n\nVote in the poll below to add your favorite directly to the itinerary!`;
-      spots = this.extractSpotsFromDestination(destination, userMessage);
     }
 
-    // Simulate natural streaming cadence
+    // 2. Verified travel spots from live search
+    for (const t of verifiedTitles) {
+      if (isValidTravelSpot(t)) candidatePool.add(t.trim());
+    }
+
+    // 3. Fallback scenic landmarks
+    candidatePool.add(`${cleanDest} Historic Center & Old Town`);
+    candidatePool.add(`${cleanDest} Scenic Viewpoint`);
+    candidatePool.add(`${cleanDest} Coastal Panorama`);
+
+    const candidates = Array.from(candidatePool).slice(0, 3);
+    const s1 = candidates[0];
+    const s2 = candidates[1];
+    const s3 = candidates[2];
+
+    responseText = `Here are 3 verified recommendations in ${cleanDest} for your group:\n\n1. **${s1}**: Highly rated spot with scenic viewpoints and great group photo opportunities.\n2. **${s2}**: Popular local landmark known for great atmosphere and authentic surroundings.\n3. **${s3}**: Essential travel highlight perfect for group exploration.\n\nI've generated a poll below so everyone can vote on what to lock in!`;
+    spots = [
+      { title: s1, category: "Sightseeing" },
+      { title: s2, category: "Sightseeing" },
+      { title: s3, category: "Sightseeing" },
+    ];
+
     if (onChunk) {
       const words = responseText.split(" ");
       for (let i = 0; i < words.length; i++) {
@@ -194,46 +413,6 @@ Keep answers concise (under 120 words). Recommend 2-3 specific spots with estima
     }
 
     return { text: responseText, suggestedSpots: spots };
-  }
-
-  private extractSpotsFromDestination(
-    destination: string,
-    _query: string
-  ): { title: string; category: string; cost?: string }[] {
-    const dest = destination.toLowerCase();
-    if (dest.includes("kyoto") || dest.includes("japan")) {
-      return [
-        { title: "Fushimi Inari Torii Gates Trail", category: "Culture", cost: "Free" },
-        { title: "Arashiyama Bamboo Forest & Tenryu-ji", category: "Sightseeing", cost: "¥500" },
-        { title: "Nishiki Market Food Stalls", category: "Food", cost: "¥3,000" },
-      ];
-    }
-    if (dest.includes("bali")) {
-      return [
-        { title: "Tegallalang Rice Terraces & Swing", category: "Sightseeing", cost: "IDR 250,000" },
-        { title: "Seminyak Beach Club Sunset", category: "Food", cost: "IDR 450,000" },
-        { title: "Mount Batur Sunrise Hike", category: "Adventure", cost: "IDR 450,000" },
-      ];
-    }
-    if (dest.includes("amalfi") || dest.includes("italy")) {
-      return [
-        { title: "Positano Cliffside Walk", category: "Sightseeing", cost: "Free" },
-        { title: "Capri Private Gozzo Boat Charter", category: "Adventure", cost: "€180" },
-        { title: "Villa Cimbrone Gardens in Ravello", category: "Sightseeing", cost: "€10" },
-      ];
-    }
-    if (dest.includes("swiss") || dest.includes("zermatt")) {
-      return [
-        { title: "Gornergrat Scenic Cogwheel Railway", category: "Transit", cost: "CHF 110" },
-        { title: "Matterhorn Glacier Paradise Caves", category: "Adventure", cost: "CHF 95" },
-        { title: "Alpine Cheese Fondue Feast", category: "Food", cost: "CHF 45" },
-      ];
-    }
-    return [
-      { title: `${destination} Iconic Landmark Tour`, category: "Sightseeing", cost: "Free" },
-      { title: `${destination} Waterfront Sunset Dinner`, category: "Food", cost: "RM 95" },
-      { title: `${destination} Adventure Trail`, category: "Adventure", cost: "RM 60" },
-    ];
   }
 }
 

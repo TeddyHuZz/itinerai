@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   Send,
   Sparkles,
-  Bot,
   Users,
   ThumbsUp,
   Plus,
@@ -15,6 +14,7 @@ import {
   ArrowLeft,
   Calendar,
   ChevronRight,
+  MapPin,
 } from "lucide-react";
 import { webllmService, SELECTED_MODEL } from "../../services/webllmService";
 import type { TripItem } from "../itinerary/ItineraryView";
@@ -35,6 +35,8 @@ export interface ChatMessage {
       title: string;
       category: string;
       cost?: string;
+      image?: string;
+      mapUrl?: string;
       votes: number;
       voters: string[];
     }[];
@@ -50,6 +52,132 @@ interface TripChatViewProps {
   onCopyLink?: (trip: TripItem) => void;
   onOpenItinerary?: (trip: TripItem) => void;
 }
+
+export function getGoogleMapsUrl(spotTitle: string, destination?: string): string {
+  const cleanTitle = spotTitle.replace(/^\d+\.\s*/, "").replace(/[*_]/g, "").trim();
+  const query = destination ? `${cleanTitle}, ${destination}` : cleanTitle;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function getSpotImage(spotTitle: string, destination?: string, fallbackImage?: string): string {
+  const t = spotTitle.toLowerCase();
+  const d = (destination || "").toLowerCase();
+
+  // 1. Match spot-specific keywords from spotTitle FIRST!
+
+  // Zermatt & Swiss Alps
+  if (t.includes("gornergrat") || t.includes("railway") || t.includes("train")) {
+    return "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("fondue") || t.includes("evening") || t.includes("dinner") || t.includes("cheese")) {
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("matterhorn") || t.includes("glacier") || t.includes("paradise")) {
+    return "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("weisshorn") || t.includes("alpine") || t.includes("summit") || t.includes("peak")) {
+    return "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // Amalfi Coast
+  if (t.includes("capri") || t.includes("boat") || t.includes("cruise") || t.includes("grotto") || t.includes("sail")) {
+    return "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("ravello") || t.includes("garden") || t.includes("rufolo") || t.includes("cimbrone") || t.includes("villa")) {
+    return "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("positano") || t.includes("cliffside") || t.includes("path") || t.includes("walk")) {
+    return "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // Kyoto
+  if (t.includes("fushimi") || t.includes("torii") || t.includes("shrine")) {
+    return "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("arashiyama") || t.includes("bamboo")) {
+    return "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("gion") || t.includes("tea") || t.includes("geisha")) {
+    return "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("kinkaku") || t.includes("golden pavilion") || t.includes("temple")) {
+    return "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("nishiki") || t.includes("market") || t.includes("street food")) {
+    return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // Bali
+  if (t.includes("ubud") || t.includes("rice terrace") || t.includes("tegallalang")) {
+    return "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("seminyak") || t.includes("beach club") || t.includes("sunset") || t.includes("beach")) {
+    return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("batur") || t.includes("volcano") || t.includes("sunrise") || t.includes("trek")) {
+    return "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // General Categories
+  if (t.includes("food") || t.includes("dining") || t.includes("restaurant") || t.includes("cafe") || t.includes("tasting")) {
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("culture") || t.includes("museum") || t.includes("castle") || t.includes("palace") || t.includes("historic")) {
+    return "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("hike") || t.includes("mountain") || t.includes("nature") || t.includes("viewpoint") || t.includes("trail")) {
+    return "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // 2. Only if no title keyword matched, use destination defaults:
+  if (d.includes("zermatt") || d.includes("swiss")) {
+    return "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&auto=format&fit=crop&q=80";
+  }
+  if (d.includes("amalfi")) {
+    return "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=400&auto=format&fit=crop&q=80";
+  }
+  if (d.includes("kyoto") || d.includes("japan")) {
+    return "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&auto=format&fit=crop&q=80";
+  }
+  if (d.includes("bali") || d.includes("indonesia")) {
+    return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&auto=format&fit=crop&q=80";
+  }
+
+  return fallbackImage || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&auto=format&fit=crop&q=80";
+}
+
+const renderFormattedMessage = (text: string, isUser = false, destination?: string) => {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const titleText = part.slice(2, -2).trim();
+      return (
+        <span key={idx} className="inline-flex items-center gap-1 flex-wrap align-baseline">
+          <strong
+            className={`font-bold ${isUser ? "text-white" : "text-zinc-950"}`}
+          >
+            {titleText}
+          </strong>
+          {!isUser && (
+            <a
+              href={getGoogleMapsUrl(titleText, destination)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[10px] font-semibold text-[#963314] bg-[#963314]/8 hover:bg-[#963314]/15 rounded-md transition-colors"
+              title={`View ${titleText} on Google Maps`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MapPin className="w-2.5 h-2.5" />
+              <span>Map ↗</span>
+            </a>
+          )}
+        </span>
+      );
+    }
+    return <React.Fragment key={idx}>{part}</React.Fragment>;
+  });
+};
 
 export const TripChatView: React.FC<TripChatViewProps> = ({
   trips,
@@ -106,7 +234,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
       {
         id: "msg-k-3",
         sender: "ai",
-        authorName: "ItinerAI (Qwen2.5 WebGPU)",
+        authorName: "ItinerAI (Llama-3.2 WebGPU)",
         avatar: "ai",
         text: "Here are 3 hand-picked afternoon ideas near Central Kyoto for your group. I've set up a poll so everyone can vote on what to lock in!",
         timestamp: "10:16 AM",
@@ -278,13 +406,16 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
           currentTrip.destination,
           (delta) => {
             setStreamingAiText((prev) => prev + delta);
+          },
+          {
+            highlights: currentTrip.highlights,
           }
         );
 
         const aiMsg: ChatMessage = {
           id: `msg-ai-${Date.now()}`,
           sender: "ai",
-          authorName: "ItinerAI (Qwen2.5 WebGPU)",
+          authorName: "ItinerAI (Llama-3.2 WebGPU)",
           avatar: "ai",
           text: result.text,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -297,8 +428,10 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
               title: spot.title,
               category: spot.category,
               cost: spot.cost,
-              votes: i === 0 ? 1 : 0,
-              voters: i === 0 ? ["Alex"] : [],
+              image: spot.image || getSpotImage(spot.title, currentTrip.destination, currentTrip.image),
+              mapUrl: spot.mapUrl || getGoogleMapsUrl(spot.title, currentTrip.destination),
+              votes: 0,
+              voters: [],
             })),
           } : undefined,
         };
@@ -369,7 +502,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 flex flex-col pb-24 md:pb-8">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex-1 flex flex-col min-h-0 overflow-hidden pb-20 md:pb-4">
       {/* Model Download Banner (Top alert if WebGPU weights are loading) */}
       {isInitializingLLM && modelProgress.progress < 1 && (
         <div className="mb-3 px-4 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-3 shrink-0">
@@ -389,12 +522,12 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
       )}
 
       {/* Main Two-Column Messenger Container (Airbnb Inspired) */}
-      <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden flex flex-1 h-[calc(100vh-10rem)] min-h-137.5">
+      <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden flex flex-1 min-h-0">
         {/* ======================================================================= */}
         {/* 1. LEFT SIDEBAR: Conversation List                                      */}
         {/* ======================================================================= */}
         <div
-          className={`w-full md:w-80 lg:w-96 border-r border-zinc-200 flex flex-col bg-white shrink-0 ${
+          className={`w-full md:w-80 lg:w-96 border-r border-zinc-200 flex flex-col bg-white shrink-0 min-h-0 ${
             showMobileChat ? "hidden md:flex" : "flex"
           }`}
         >
@@ -448,7 +581,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
           </div>
 
           {/* Conversations Scroll Area */}
-          <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+          <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 min-h-0">
             {filteredTrips.map((trip) => {
               const isSelected = trip.id === selectedTripId;
               const lastMsg = getLatestMessage(trip.id);
@@ -510,7 +643,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
         {/* 2. RIGHT PANEL: Active Chat Thread (Airbnb Header & Messages)           */}
         {/* ======================================================================= */}
         <div
-          className={`flex-1 flex flex-col bg-white min-w-0 ${
+          className={`flex-1 flex flex-col bg-white min-w-0 min-h-0 ${
             !showMobileChat ? "hidden md:flex" : "flex"
           }`}
         >
@@ -565,7 +698,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                   {isModelReady ? (
                     <span className="text-emerald-600 font-bold flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Qwen2.5 WebGPU
+                      Llama-3.2 WebGPU
                     </span>
                   ) : isInitializingLLM ? (
                     <span className="text-amber-600 font-bold flex items-center gap-1">
@@ -608,10 +741,14 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
           </div>
 
           {/* Messages Scroll Area */}
-          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-zinc-50/40">
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto min-h-0 space-y-4 bg-zinc-50/40">
             {currentChat.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-400">
-                <Bot className="w-12 h-12 text-zinc-300 mb-2" />
+                <img
+                  src="/favicon.svg"
+                  alt="ItinerAI"
+                  className="w-12 h-12 rounded-2xl object-contain shadow-xs mb-2"
+                />
                 <h4 className="text-sm font-bold text-zinc-700">Trip Chat Ready</h4>
                 <p className="text-xs text-zinc-500 max-w-sm mt-1">
                   Chat with friends and tag <span className="text-[#f15a24] font-bold">@ItinerAI</span> to find activities, generate polls, and vote together!
@@ -631,9 +768,11 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                   >
                     {/* Avatar */}
                     {isAI ? (
-                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-500 to-[#963314] text-white flex items-center justify-center shrink-0 shadow-xs">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
+                      <img
+                        src="/favicon.svg"
+                        alt="ItinerAI"
+                        className="w-8 h-8 rounded-xl object-contain shadow-xs shrink-0"
+                      />
                     ) : (
                       <img
                         src={msg.avatar}
@@ -644,17 +783,21 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
 
                     {/* Message Bubble */}
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] space-y-1.5 ${
+                      className={`max-w-[85%] sm:max-w-[75%] flex flex-col ${
                         isUser ? "items-end text-right" : "items-start text-left"
                       }`}
                     >
-                      <div className="flex items-center gap-2 px-1 text-[11px] font-medium text-zinc-400">
+                      <div
+                        className={`flex items-center gap-2 px-1 mb-1 text-[11px] font-medium text-zinc-400 ${
+                          isUser ? "justify-end" : "justify-start"
+                        }`}
+                      >
                         <span className="font-bold text-zinc-700">{msg.authorName}</span>
                         <span>{msg.timestamp}</span>
                       </div>
 
                       <div
-                        className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                        className={`w-fit max-w-full px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-left ${
                           isUser
                             ? "bg-[#963314] text-white rounded-tr-xs"
                             : isAI
@@ -662,7 +805,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                             : "bg-white border border-zinc-200/80 text-zinc-800 rounded-tl-xs shadow-2xs"
                         }`}
                       >
-                        {msg.text}
+                        {renderFormattedMessage(msg.text, isUser, currentTrip?.destination)}
                       </div>
 
                       {/* Interactive Poll Widget */}
@@ -694,11 +837,30 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                           <div className="space-y-2">
                             {msg.poll.options.map((opt) => {
                               const hasVoted = opt.voters.includes("Alex");
+                              const spotImage = getSpotImage(opt.title, currentTrip?.destination, opt.image || currentTrip?.image);
+                              const mapUrl = opt.mapUrl || getGoogleMapsUrl(opt.title, currentTrip?.destination);
+
                               return (
                                 <div
                                   key={opt.id}
-                                  className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200/80 hover:border-zinc-300 transition-all bg-zinc-50/50 gap-2"
+                                  className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200/80 hover:border-zinc-300 transition-all bg-zinc-50/50 gap-3 group"
                                 >
+                                  {/* Visual Place Thumbnail */}
+                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-zinc-200 shadow-2xs bg-zinc-100">
+                                    <img
+                                      src={spotImage}
+                                      alt={opt.title}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        const target = e.currentTarget;
+                                        if (currentTrip?.image && target.src !== currentTrip.image) {
+                                          target.src = currentTrip.image;
+                                        }
+                                      }}
+                                    />
+                                  </div>
+
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                       <span className="text-xs font-bold text-zinc-900 truncate">
@@ -713,10 +875,24 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                                         </span>
                                       )}
                                     </div>
-                                    <div className="text-[10px] text-zinc-400 font-medium mt-0.5">
-                                      {opt.voters.length > 0
-                                        ? `Voted by: ${opt.voters.join(", ")}`
-                                        : "No votes yet"}
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[10px] text-zinc-400 font-medium">
+                                        {opt.voters.length > 0
+                                          ? `Voted by: ${opt.voters.join(", ")}`
+                                          : "No votes yet"}
+                                      </span>
+                                      <span className="text-zinc-300 text-[10px]">•</span>
+                                      <a
+                                        href={mapUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#963314] hover:underline cursor-pointer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        title={`Open ${opt.title} in Google Maps`}
+                                      >
+                                        <MapPin className="w-2.5 h-2.5" />
+                                        <span>Map ↗</span>
+                                      </a>
                                     </div>
                                   </div>
 
@@ -771,16 +947,18 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
             {/* AI Streaming Thinking Indicator */}
             {isAiThinking && (
               <div className="flex items-start gap-2.5 text-left">
-                <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-500 to-[#963314] text-white flex items-center justify-center shrink-0 shadow-xs animate-pulse">
-                  <Sparkles className="w-4 h-4" />
-                </div>
+                <img
+                  src="/favicon.svg"
+                  alt="ItinerAI"
+                  className="w-8 h-8 rounded-xl object-contain shadow-xs shrink-0 animate-pulse"
+                />
                 <div className="bg-white border border-zinc-200 p-3.5 rounded-2xl rounded-tl-xs text-xs text-zinc-800 space-y-1 shadow-xs">
                   <div className="text-[11px] font-bold text-[#963314] flex items-center gap-1">
                     <Sparkles className="w-3 h-3 animate-spin" />
-                    <span>Qwen2.5 WebGPU is generating recommendations...</span>
+                    <span>Llama-3.2 WebGPU is generating recommendations...</span>
                   </div>
                   {streamingAiText ? (
-                    <p className="whitespace-pre-wrap leading-relaxed">{streamingAiText}</p>
+                    <div className="whitespace-pre-wrap leading-relaxed">{renderFormattedMessage(streamingAiText, false, currentTrip?.destination)}</div>
                   ) : (
                     <div className="flex items-center gap-1.5 text-zinc-400">
                       <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" />
@@ -797,43 +975,8 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
 
           {/* Composer Footer */}
           <div className="p-3 sm:p-4 border-t border-zinc-100 bg-white space-y-2 shrink-0">
-            {/* Quick Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-              <button
-                type="button"
-                onClick={() => setInputVal(`@ItinerAI find 3 must-visit dinner spots in ${currentTrip?.destination}`)}
-                className="px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-orange-50 text-zinc-700 hover:text-[#963314] border border-zinc-200 transition-colors shrink-0 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <span>🍜 Dinner Spots Poll</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setInputVal(`@ItinerAI suggest outdoor adventure ideas for ${currentTrip?.destination}`)}
-                className="px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-orange-50 text-zinc-700 hover:text-[#963314] border border-zinc-200 transition-colors shrink-0 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <span>🥾 Day Hikes &amp; Sights</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setInputVal(`@ItinerAI what are the best hidden gems in ${currentTrip?.destination}?`)}
-                className="px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-orange-50 text-zinc-700 hover:text-[#963314] border border-zinc-200 transition-colors shrink-0 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <span>✨ Hidden Gems</span>
-              </button>
-            </div>
-
             {/* Input Row */}
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setInputVal((prev) => (prev.startsWith("@ItinerAI ") ? prev : `@ItinerAI ${prev}`))}
-                className="px-3 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#963314] border border-orange-200/80 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-                title="Tag ItinerAI Copilot"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#f15a24]" />
-                <span className="hidden sm:inline">Tag @ItinerAI</span>
-              </button>
-
               <input
                 type="text"
                 value={inputVal}
@@ -851,6 +994,14 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                 <span className="hidden sm:inline">Send</span>
               </button>
             </form>
+
+            {/* AI Assistant Hint Subtitle */}
+            <div className="text-[11px] text-zinc-400 text-center flex items-center justify-center gap-1.5 pt-0.5 select-none">
+              <Sparkles className="w-3 h-3 text-[#f15a24] shrink-0" />
+              <span>
+                Tip: Tag <span className="font-semibold text-[#963314] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60">@ItinerAI</span> to assist in planning &amp; group polls with AI
+              </span>
+            </div>
           </div>
         </div>
       </div>

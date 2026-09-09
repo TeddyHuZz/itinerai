@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Send,
@@ -323,6 +323,132 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [streamingAiText, setStreamingAiText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Mention State
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [selectedMentionIdx, setSelectedMentionIdx] = useState(0);
+
+  // Close mention popup on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowMentions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Mentions Candidates (AI + active trip companions)
+  const mentionCandidates = useMemo(() => {
+    const list = [
+      {
+        id: "ai-itinerai",
+        name: "ItinerAI",
+        tag: "ItinerAI",
+        role: "AI Copilot",
+        avatar: "/favicon.svg",
+        isAi: true,
+        description: "Ask recommendations, create polls & plan days",
+      },
+    ];
+
+    const seenNames = new Set(["itinerai", "alex morgan (you)", "alex morgan"]);
+
+    if (currentTrip?.members) {
+      for (const m of currentTrip.members) {
+        if (!seenNames.has(m.name.toLowerCase())) {
+          seenNames.add(m.name.toLowerCase());
+          list.push({
+            id: `member-${m.id}`,
+            name: m.name,
+            tag: m.name.replace(/\s+/g, ""),
+            role: "Companion",
+            avatar: m.avatar,
+            isAi: false,
+            description: `Traveling in ${currentTrip.destination.split(",")[0]}`,
+          });
+        }
+      }
+    }
+
+    const chatMsgs = messages[currentTrip?.id || ""] || [];
+    for (const msg of chatMsgs) {
+      if (
+        msg.sender === "companion" &&
+        msg.authorName &&
+        !seenNames.has(msg.authorName.toLowerCase())
+      ) {
+        seenNames.add(msg.authorName.toLowerCase());
+        list.push({
+          id: `speaker-${msg.authorName}`,
+          name: msg.authorName,
+          tag: msg.authorName.replace(/\s+/g, ""),
+          role: "Companion",
+          avatar: msg.avatar,
+          isAi: false,
+          description: "Group Member",
+        });
+      }
+    }
+
+    return list;
+  }, [currentTrip, messages]);
+
+  const filteredMentions = useMemo(() => {
+    if (!mentionQuery) return mentionCandidates;
+    const q = mentionQuery.toLowerCase();
+    return mentionCandidates.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.tag.toLowerCase().includes(q) ||
+        c.role.toLowerCase().includes(q)
+    );
+  }, [mentionCandidates, mentionQuery]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputVal(val);
+
+    const match = val.match(/@([a-zA-Z0-9_]*)$/);
+    if (match) {
+      setShowMentions(true);
+      setMentionQuery(match[1]);
+      setSelectedMentionIdx(0);
+    } else {
+      setShowMentions(false);
+      setMentionQuery("");
+    }
+  };
+
+  const handleSelectMention = (tag: string) => {
+    const replaced = inputVal.replace(/@([a-zA-Z0-9_]*)$/, `@${tag} `);
+    setInputVal(replaced);
+    setShowMentions(false);
+    setMentionQuery("");
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 20);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showMentions && filteredMentions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedMentionIdx((prev) => (prev + 1) % filteredMentions.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedMentionIdx((prev) => (prev - 1 + filteredMentions.length) % filteredMentions.length);
+      } else if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        handleSelectMention(filteredMentions[selectedMentionIdx].tag);
+      } else if (e.key === "Escape") {
+        setShowMentions(false);
+      }
+    }
+  };
 
   // Initialize WebLLM when component mounts
   useEffect(() => {
@@ -395,6 +521,8 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
     }));
 
     setInputVal("");
+    setShowMentions(false);
+    setMentionQuery("");
 
     if (isAiQuery) {
       setIsAiThinking(true);
@@ -975,31 +1103,114 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
 
           {/* Composer Footer */}
           <div className="p-3 sm:p-4 border-t border-zinc-100 bg-white space-y-2 shrink-0">
-            {/* Input Row */}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={inputVal}
-                onChange={(e) => setInputVal(e.target.value)}
-                placeholder={`Chat with companions or ask @ItinerAI for ${currentTrip?.destination || "trip"}...`}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200/90 focus:border-[#963314] focus:ring-2 focus:ring-[#963314]/10 bg-zinc-50/50 text-xs sm:text-sm font-medium outline-none transition-all placeholder:text-zinc-400"
-              />
+            {/* Input Row with Floating @Mention Popup */}
+            <div className="relative">
+              {showMentions && filteredMentions.length > 0 && (
+                <div
+                  className="absolute bottom-full left-0 mb-2 w-full max-w-sm sm:max-w-md bg-white rounded-2xl border border-zinc-200/90 shadow-2xl overflow-hidden z-50 p-1.5 space-y-1 text-left backdrop-blur-md"
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between border-b border-zinc-100">
+                    <span>Mention in {currentTrip?.destination?.split(",")[0] || "Trip"}</span>
+                    <span className="text-[9px] text-zinc-400 font-normal">↑↓ navigate • Enter to pick</span>
+                  </div>
 
-              <button
-                type="submit"
-                disabled={!inputVal.trim()}
-                className="px-4 py-2.5 rounded-xl bg-[#f15a24] hover:bg-[#e04812] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shrink-0"
-              >
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Send</span>
-              </button>
-            </form>
+                  <div className="max-h-56 overflow-y-auto space-y-0.5 custom-scrollbar">
+                    {filteredMentions.map((item, idx) => {
+                      const isSelected = idx === selectedMentionIdx;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onMouseEnter={() => setSelectedMentionIdx(idx)}
+                          onClick={() => handleSelectMention(item.tag)}
+                          className={`w-full flex items-center gap-2.5 p-2 rounded-xl transition-all text-left cursor-pointer ${
+                            isSelected
+                              ? "bg-orange-50 border border-orange-200/80"
+                              : "hover:bg-zinc-50 border border-transparent"
+                          }`}
+                        >
+                          {/* Avatar / Icon */}
+                          <div className="relative shrink-0">
+                            <img
+                              src={item.avatar}
+                              alt={item.name}
+                              className="w-8 h-8 rounded-xl object-cover border border-zinc-200 shadow-2xs"
+                            />
+                            {item.isAi && (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#f15a24] text-white flex items-center justify-center border border-white">
+                                <Sparkles className="w-2 h-2" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Member info */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-zinc-900 truncate">
+                                {item.name}
+                              </span>
+                              <span className="text-[11px] font-semibold text-[#963314]">
+                                @{item.tag}
+                              </span>
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+                                  item.isAi
+                                    ? "bg-orange-100 text-[#963314]"
+                                    : "bg-zinc-100 text-zinc-600"
+                                }`}
+                              >
+                                {item.role}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                              {item.description}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputVal}
+                  onChange={handleInputChange}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={`Chat with companions or ask @ItinerAI for ${currentTrip?.destination || "trip"}...`}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200/90 focus:border-[#963314] focus:ring-2 focus:ring-[#963314]/10 bg-zinc-50/50 text-xs sm:text-sm font-medium outline-none transition-all placeholder:text-zinc-400"
+                />
+
+                <button
+                  type="submit"
+                  disabled={!inputVal.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-[#f15a24] hover:bg-[#e04812] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shrink-0"
+                >
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Send</span>
+                </button>
+              </form>
+            </div>
 
             {/* AI Assistant Hint Subtitle */}
             <div className="text-[11px] text-zinc-400 text-center flex items-center justify-center gap-1.5 pt-0.5 select-none">
               <Sparkles className="w-3 h-3 text-[#f15a24] shrink-0" />
               <span>
-                Tip: Tag <span className="font-semibold text-[#963314] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200/60">@ItinerAI</span> to assist in planning &amp; group polls with AI
+                Tip: Tag{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInputVal((prev) => (prev.includes("@ItinerAI") ? prev : `@ItinerAI ${prev}`.trim() + " "));
+                    inputRef.current?.focus();
+                  }}
+                  className="font-semibold text-[#963314] bg-orange-50 hover:bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200/60 cursor-pointer transition-colors"
+                >
+                  @ItinerAI
+                </button>{" "}
+                to assist in planning &amp; group polls with AI
               </span>
             </div>
           </div>

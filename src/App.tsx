@@ -13,8 +13,10 @@ import { TestimonialQuoteSecondSection } from "@/components/landing/TestimonialQ
 import { FooterSection } from "@/components/landing/FooterSection";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LegalModal } from "@/components/legal/LegalModal";
+import { DashboardPage } from "@/components/dashboard/DashboardPage";
 
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModal, setAuthModal] = useState<{
     isOpen: boolean;
     mode: "choose" | "signup" | "login";
@@ -46,6 +48,15 @@ export default function App() {
   const handleCloseLegal = () => {
     setLegalModal((prev) => ({ ...prev, isOpen: false }));
   };
+
+  if (isLoggedIn) {
+    return (
+      <DashboardPage
+        onLogout={() => setIsLoggedIn(false)}
+        user={{ name: "Alex Morgan", email: "alex@travel.com" }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-purple-200 selection:text-zinc-950">
@@ -94,6 +105,7 @@ export default function App() {
             initialMode={authModal.mode}
             onClose={handleCloseAuth}
             onOpenLegal={handleOpenLegal}
+            onLoginSuccess={() => setIsLoggedIn(true)}
           />
         )}
       </AnimatePresence>

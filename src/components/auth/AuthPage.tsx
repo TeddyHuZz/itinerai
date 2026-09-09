@@ -17,19 +17,21 @@ interface AuthPageProps {
   initialMode?: "choose" | "signup" | "login";
   onClose: () => void;
   onOpenLegal?: (type: "terms" | "privacy") => void;
+  onLoginSuccess?: () => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({
   initialMode = "login",
   onClose,
   onOpenLegal,
+  onLoginSuccess,
 }) => {
   const [mode, setMode] = useState<"login" | "signup">(
     initialMode === "signup" ? "signup" : "login"
   );
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [email, setEmail] = useState("alex@travel.com");
+  const [password, setPassword] = useState("demo123456");
+  const [name, setName] = useState("Alex Morgan");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [submitted, setSubmitted] = useState(false);
@@ -39,14 +41,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     setSubmitted(true);
     setTimeout(() => {
       onClose();
-    }, 1500);
+      onLoginSuccess?.();
+    }, 1200);
   };
 
   const handleSocialAuth = () => {
     setSubmitted(true);
     setTimeout(() => {
       onClose();
-    }, 1500);
+      onLoginSuccess?.();
+    }, 1200);
   };
 
   return (
@@ -276,7 +280,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
                       <input
                         type="email"
-                        required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="alex@travel.com"
@@ -299,7 +302,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
                       <input
                         type={showPassword ? "text" : "password"}
-                        required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
@@ -416,7 +418,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <User className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
                       <input
                         type="text"
-                        required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Alex Taylor"
@@ -433,7 +434,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
                       <input
                         type="email"
-                        required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="alex@travel.com"
@@ -450,7 +450,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
                       <input
                         type={showPassword ? "text" : "password"}
-                        required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Create a strong password"

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  PerplexityIcon,
+  DeliverooIcon,
+  TikTokIcon,
+} from "@/components/ui/Icons";
 
 interface BrandItem {
   id: string;
@@ -29,9 +34,7 @@ const BRAND_SETS: BrandItem[][] = [
       id: "perplexity",
       render: () => (
         <div className="flex items-center gap-1.5">
-          <svg className="w-5 h-5 fill-current text-zinc-900" viewBox="0 0 24 24">
-            <path d="M12 2L4 7v10l8 5 8-5V7l-8-5zm0 2.2l6 3.75v3.45L12 7.65 6 11.4V7.95l6-3.75z" />
-          </svg>
+          <PerplexityIcon size={20} className="text-zinc-900" />
           <span className="font-bold text-[18px] tracking-tight text-zinc-900">
             perplexity
           </span>
@@ -50,9 +53,7 @@ const BRAND_SETS: BrandItem[][] = [
       id: "deliveroo",
       render: () => (
         <div className="flex items-center gap-1.5">
-          <svg className="w-5 h-5 fill-current text-zinc-900" viewBox="0 0 24 24">
-            <path d="M18.8 6.2c-.3-.3-.8-.3-1.1 0l-5.7 5.7-2.7-2.7c-.3-.3-.8-.3-1.1 0s-.3.8 0 1.1l3.3 3.3c.3.3.8.3 1.1 0l6.2-6.3c.3-.3.3-.8 0-1.1z" />
-          </svg>
+          <DeliverooIcon size={20} className="text-zinc-900" />
           <span className="font-extrabold text-[19px] tracking-tight text-zinc-900">
             deliveroo
           </span>
@@ -63,9 +64,7 @@ const BRAND_SETS: BrandItem[][] = [
       id: "tiktok",
       render: () => (
         <div className="flex items-center gap-1">
-          <svg className="w-4 h-4 fill-current text-zinc-900" viewBox="0 0 24 24">
-            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.29 0 .57.04.84.12V9.36a6.34 6.34 0 00-.84-.06 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 009.79 5.34V12.9a8.27 8.27 0 005.17 1.8v-3.46a4.84 4.84 0 01-2.01-.89 4.84 4.84 0 01-1.4-2.66z" />
-          </svg>
+          <TikTokIcon size={18} className="text-zinc-900" />
           <span className="font-extrabold text-[18px] tracking-tight text-zinc-900">
             TikTok
           </span>

@@ -11,6 +11,7 @@ import { ScaleFeaturesSection } from "@/components/landing/ScaleFeaturesSection"
 import { TestimonialQuoteSecondSection } from "@/components/landing/TestimonialQuoteSecondSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { AuthPage } from "@/components/auth/AuthPage";
+import { LegalModal } from "@/components/legal/LegalModal";
 
 export default function App() {
   const [authModal, setAuthModal] = useState<{
@@ -21,12 +22,28 @@ export default function App() {
     mode: "choose",
   });
 
+  const [legalModal, setLegalModal] = useState<{
+    isOpen: boolean;
+    type: "terms" | "privacy";
+  }>({
+    isOpen: false,
+    type: "terms",
+  });
+
   const handleOpenAuth = (mode: "choose" | "signup" | "login" = "choose") => {
     setAuthModal({ isOpen: true, mode });
   };
 
   const handleCloseAuth = () => {
     setAuthModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleOpenLegal = (type: "terms" | "privacy" = "terms") => {
+    setLegalModal({ isOpen: true, type });
+  };
+
+  const handleCloseLegal = () => {
+    setLegalModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -64,13 +81,25 @@ export default function App() {
       </main>
 
       {/* Section 10: "Try Itinerai today" CTA + 5-Col Footer Links + Black Newsletter Banner */}
-      <FooterSection onOpenAuth={handleOpenAuth} />
+      <FooterSection
+        onOpenAuth={handleOpenAuth}
+        onOpenLegal={handleOpenLegal}
+      />
 
       {/* Separate Dedicated Auth / Sign Up / Log In Page View */}
       {authModal.isOpen && (
         <AuthPage
           initialMode={authModal.mode}
           onClose={handleCloseAuth}
+          onOpenLegal={handleOpenLegal}
+        />
+      )}
+
+      {/* Terms of Service & Privacy Policy Viewer Modal */}
+      {legalModal.isOpen && (
+        <LegalModal
+          initialType={legalModal.type}
+          onClose={handleCloseLegal}
         />
       )}
     </div>

@@ -3,9 +3,13 @@ import { ArrowUpRight } from "lucide-react";
 
 interface FooterSectionProps {
   onOpenAuth?: (mode: "signup" | "login") => void;
+  onOpenLegal?: (type: "terms" | "privacy") => void;
 }
 
-export const FooterSection: React.FC<FooterSectionProps> = ({ onOpenAuth }) => {
+export const FooterSection: React.FC<FooterSectionProps> = ({
+  onOpenAuth,
+  onOpenLegal,
+}) => {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -93,8 +97,18 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ onOpenAuth }) => {
           <div className="flex flex-col gap-3">
             <h5 className="font-bold text-zinc-950 mb-1">Company</h5>
             <a href="#customers" className="text-zinc-600 hover:text-zinc-950 transition-colors">Customers</a>
-            <a href="#terms" className="text-zinc-600 hover:text-zinc-950 transition-colors">Terms & conditions</a>
-            <a href="#privacy" className="text-zinc-600 hover:text-zinc-950 transition-colors">Privacy policy</a>
+            <button
+              onClick={() => onOpenLegal?.("terms")}
+              className="text-left text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
+            >
+              Terms &amp; conditions
+            </button>
+            <button
+              onClick={() => onOpenLegal?.("privacy")}
+              className="text-left text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
+            >
+              Privacy policy
+            </button>
             <a href="#manifesto" className="text-zinc-600 hover:text-zinc-950 transition-colors">AI Manifesto</a>
             <a href="#trust" className="text-zinc-600 hover:text-zinc-950 transition-colors inline-flex items-center gap-1">
               Trust Center <ArrowUpRight className="w-3 h-3" />

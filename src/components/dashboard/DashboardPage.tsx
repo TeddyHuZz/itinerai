@@ -7,7 +7,6 @@ import {
   Award,
   Plane,
   CalendarDays,
-  Users,
   Wallet,
   Smartphone,
   Star,
@@ -20,9 +19,11 @@ import {
   LayoutList,
   LayoutGrid,
   Globe,
+  MessageSquare,
 } from "lucide-react";
 import { DateRangePickerModal } from "./DateRangePickerModal";
-import { ItineraryView } from "../itinerary/ItineraryView";
+import { ItineraryView, INITIAL_TRIPS } from "../itinerary/ItineraryView";
+import { TripChatView } from "../chat/TripChatView";
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -403,6 +404,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"flights" | "hotels">("flights");
   const [currentNav, setCurrentNav] = useState<"search" | "itinerary" | "team" | "expenses">("search");
+  const [activeChatTripId, setActiveChatTripId] = useState<string>("trip-bali");
   const [isSearching, setIsSearching] = useState(false);
   const [bookingNotice, setBookingNotice] = useState<string | null>(null);
 
@@ -560,8 +562,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>Team</span>
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Chat</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#f15a24]" />
             </button>
 
             <button
@@ -625,7 +628,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* 2. MAIN DYNAMIC VIEW: ITINERARY ("YOUR ESCAPES") OR SEARCH HUB         */}
       {/* ======================================================================= */}
       {currentNav === "itinerary" ? (
-        <ItineraryView onNavigateToSearch={() => setCurrentNav("search")} />
+        <ItineraryView
+          onNavigateToSearch={(prefill) => {
+            if (prefill?.destination) {
+              setDestination(prefill.destination);
+            }
+            if (prefill?.dates) {
+              setDates(prefill.dates);
+            }
+            setCurrentNav("search");
+          }}
+          onNavigateToChat={(tripId) => {
+            setActiveChatTripId(tripId);
+            setCurrentNav("team");
+          }}
+        />
+      ) : currentNav === "team" ? (
+        <TripChatView
+          trips={INITIAL_TRIPS}
+          activeTripId={activeChatTripId}
+          onSelectTrip={(trip) => setActiveChatTripId(trip.id)}
+          onOpenItinerary={() => setCurrentNav("itinerary")}
+          onCopyLink={(trip) => {
+            navigator.clipboard.writeText(`https://itinerai.com/trip/${trip.id}?join=${trip.inviteCode}`).catch(() => {});
+            setBookingNotice(`Invite link for ${trip.destination} copied to clipboard!`);
+            setTimeout(() => setBookingNotice(null), 3000);
+          }}
+        />
       ) : (
         <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 flex flex-col pb-24 md:pb-12">
         {/* Search Bar */}
@@ -1468,12 +1497,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <button
           type="button"
           onClick={() => setCurrentNav("team")}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors ${
+          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors relative ${
             currentNav === "team" ? "text-[#963314]" : "text-zinc-500 hover:text-zinc-800"
           }`}
         >
-          <Users className="w-5 h-5" />
-          <span className="text-[11px] font-bold">Team</span>
+          <div className="relative">
+            <MessageSquare className="w-5 h-5" />
+            <span className="w-2 h-2 rounded-full bg-[#f15a24] absolute -top-0.5 -right-1 border border-white" />
+          </div>
+          <span className="text-[11px] font-bold">Chat</span>
           {currentNav === "team" && (
             <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
           )}

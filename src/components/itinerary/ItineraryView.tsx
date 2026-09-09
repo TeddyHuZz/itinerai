@@ -15,7 +15,9 @@ import {
   ChevronRight,
   Trash2,
   AlertTriangle,
+  Compass,
 } from "lucide-react";
+import { TripWorkspace } from "./TripWorkspace";
 
 export interface TripItem {
   id: string;
@@ -36,7 +38,7 @@ export interface TripItem {
   highlights?: string[];
 }
 
-const INITIAL_TRIPS: TripItem[] = [
+export const INITIAL_TRIPS: TripItem[] = [
   {
     id: "trip-bali",
     destination: "Bali, Indonesia",
@@ -264,13 +266,18 @@ export const getCrawledDestinationImage = (destination: string): string => {
 };
 
 interface ItineraryViewProps {
-  onNavigateToSearch?: () => void;
+  onNavigateToSearch?: (prefill?: { destination?: string; dates?: string }) => void;
+  onNavigateToChat?: (tripId: string) => void;
 }
 
-export const ItineraryView: React.FC<ItineraryViewProps> = ({ onNavigateToSearch }) => {
+export const ItineraryView: React.FC<ItineraryViewProps> = ({
+  onNavigateToSearch,
+  onNavigateToChat,
+}) => {
   const [trips, setTrips] = useState<TripItem[]>(INITIAL_TRIPS);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTrip, setSelectedTrip] = useState<TripItem | null>(null);
+  const [activeTripWorkspace, setActiveTripWorkspace] = useState<TripItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [toastNotice, setToastNotice] = useState<{
@@ -343,6 +350,52 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ onNavigateToSearch
     // Show copy link alert for the created trip
     copyShareLink(newTrip);
   };
+
+  // If a trip workspace is active, render the Day-by-Day Workspace
+  if (activeTripWorkspace) {
+    return (
+      <div className="w-full">
+        <TripWorkspace
+          trip={activeTripWorkspace}
+          onBack={() => setActiveTripWorkspace(null)}
+          onNavigateToSearch={onNavigateToSearch}
+          onNavigateToChat={onNavigateToChat}
+          onCopyLink={copyShareLink}
+        />
+
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {toastNotice && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className={`fixed top-5 left-1/2 -translate-x-1/2 z-100 max-w-md w-[calc(100%-2rem)] p-3.5 rounded-2xl text-white text-xs flex items-center justify-between shadow-2xl shadow-black/50 border pointer-events-auto ${
+                toastNotice.isDelete
+                  ? "bg-rose-950/95 border-rose-700/80"
+                  : "bg-zinc-950/95 border-zinc-700/80"
+              } backdrop-blur-md`}
+            >
+              <div className="flex items-center gap-2.5">
+                {toastNotice.isDelete ? (
+                  <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
+                ) : (
+                  <Share2 className="w-4 h-4 text-[#f15a24] shrink-0" />
+                )}
+                <span className="font-semibold">{toastNotice.message}</span>
+              </div>
+              {toastNotice.isDelete ? (
+                <Check className="w-4 h-4 text-rose-400 shrink-0 ml-2" />
+              ) : (
+                <Check className="w-4 h-4 text-emerald-400 shrink-0 ml-2" />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 flex flex-col pb-28">
@@ -859,20 +912,35 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ onNavigateToSearch
                       </button>
                     </div>
 
-                    {onNavigateToSearch && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedTrip(null);
-                          setShowDeleteConfirm(false);
-                          onNavigateToSearch();
-                        }}
-                        className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-                      >
-                        <span>Search Flights &amp; Hotels</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    {/* Primary Action: Open Trip Planner */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const tripToOpen = selectedTrip;
+                        setSelectedTrip(null);
+                        setShowDeleteConfirm(false);
+                        setActiveTripWorkspace(tripToOpen);
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
+                    >
+                      {selectedTrip.status === "Confirmed" ? (
+                        <>
+                          <Calendar className="w-4 h-4 text-emerald-400" />
+                          <span>Open Itinerary</span>
+                        </>
+                      ) : selectedTrip.status === "Planning" ? (
+                        <>
+                          <Compass className="w-4 h-4 text-amber-400" />
+                          <span>Collaborate &amp; Plan</span>
+                        </>
+                      ) : (
+                        <>
+                          <Compass className="w-4 h-4 text-blue-400" />
+                          <span>Open Trip Planner</span>
+                        </>
+                      )}
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>

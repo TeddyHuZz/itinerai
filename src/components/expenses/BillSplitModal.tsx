@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { ScannedReceiptData, ScannedItem } from "./ReceiptScannerModal";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 export interface ExpenseRecord {
   id: string;
@@ -58,6 +59,8 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
   companions,
   onConfirmExpense,
 }) => {
+  useBodyScrollLock(isOpen);
+
   if (!isOpen || !receiptData) return null;
 
   // Safe fallback companion list if none passed
@@ -87,7 +90,7 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
           },
         ];
 
-  const [paidBy, setPaidBy] = useState<string>("Alice");
+  const [paidBy, setPaidBy] = useState<string>(() => members[0]?.name || "You");
   const [items, setItems] = useState<ScannedItem[]>(() => {
     // By default, assign all items to all members equally
     return receiptData.items.map((item) => ({
@@ -197,7 +200,7 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[92vh] border border-zinc-200"
+          className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[92vh] border border-zinc-200"
         >
           {/* Header */}
           <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/80">
@@ -232,7 +235,7 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                 <span>Who Paid the Bill?</span>
               </label>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {members.map((m) => {
                   const isPayer = paidBy === m.name;
                   return (
@@ -240,9 +243,9 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                       key={m.id}
                       type="button"
                       onClick={() => setPaidBy(m.name)}
-                      className={`p-2.5 rounded-2xl border transition-all flex items-center gap-2 text-left cursor-pointer ${
+                      className={`p-3 rounded-2xl border transition-all flex items-center gap-2.5 text-left cursor-pointer ${
                         isPayer
-                          ? "bg-orange-50/90 border-[#963314] ring-2 ring-[#963314]/10 shadow-xs"
+                          ? "bg-orange-50/90 border-[#963314] ring-2 ring-[#963314]/20 shadow-xs"
                           : "bg-white border-zinc-200 hover:bg-zinc-50"
                       }`}
                     >
@@ -250,16 +253,16 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                         <img
                           src={m.avatar}
                           alt={m.name}
-                          className="w-7 h-7 rounded-full object-cover shrink-0 border border-zinc-200"
+                          className="w-9 h-9 rounded-full object-cover shrink-0 border border-zinc-200 shadow-2xs"
                         />
                       )}
                       <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold text-zinc-900 block truncate">
+                        <span className="text-xs font-bold text-zinc-900 block wrap-break-word leading-snug">
                           {m.name}
                         </span>
-                        {isPayer && (
-                          <span className="text-[10px] font-bold text-[#963314]">Payer</span>
-                        )}
+                        <span className={`text-[10px] font-bold block mt-0.5 ${isPayer ? "text-[#963314]" : "text-zinc-400"}`}>
+                          {isPayer ? "✓ Covered total bill" : "Tap to set payer"}
+                        </span>
                       </div>
                     </button>
                   );
@@ -277,11 +280,11 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                 <span className="text-[11px] text-zinc-400">Tap companions to assign</span>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 rounded-2xl border border-zinc-200 bg-zinc-50/40 space-y-2"
+                    className="p-3.5 rounded-2xl border border-zinc-200 bg-zinc-50/40 space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-zinc-900">{item.name}</span>
@@ -289,18 +292,31 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                         <span className="text-xs font-extrabold text-[#963314]">
                           {receiptData.currency} {item.price.toFixed(2)}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectAllFor(item.id)}
-                          className="text-[10px] font-semibold text-zinc-500 hover:text-zinc-800 bg-zinc-200/60 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                        >
-                          All
-                        </button>
+                        <div className="flex items-center gap-1 bg-zinc-200/60 p-0.5 rounded-lg">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectAllFor(item.id)}
+                            className="text-[10px] font-semibold text-zinc-600 hover:text-zinc-900 px-2 py-0.5 rounded hover:bg-white transition-all cursor-pointer"
+                          >
+                            All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setItems((prev) =>
+                                prev.map((it) => (it.id === item.id ? { ...it, assignedTo: [] } : it))
+                              );
+                            }}
+                            className="text-[10px] font-semibold text-zinc-500 hover:text-zinc-800 px-1.5 py-0.5 rounded hover:bg-white transition-all cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
                       </div>
                     </div>
 
                     {/* Member selection chips */}
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    <div className="flex flex-wrap gap-2 pt-0.5">
                       {members.map((m) => {
                         const isAssigned = item.assignedTo.includes(m.name);
                         return (
@@ -308,9 +324,9 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                             key={m.id}
                             type="button"
                             onClick={() => handleToggleMember(item.id, m.name)}
-                            className={`px-2 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                               isAssigned
-                                ? "bg-[#963314] text-white shadow-2xs"
+                                ? "bg-[#963314] text-white shadow-xs"
                                 : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
                             }`}
                           >
@@ -318,11 +334,11 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
                               <img
                                 src={m.avatar}
                                 alt={m.name}
-                                className="w-3.5 h-3.5 rounded-full object-cover"
+                                className="w-4 h-4 rounded-full object-cover shrink-0"
                               />
                             )}
-                            <span>{m.name.split(" ")[0]}</span>
-                            {isAssigned && <Check className="w-2.5 h-2.5 stroke-3" />}
+                            <span>{m.name}</span>
+                            {isAssigned && <Check className="w-3 h-3 stroke-[2.5]" />}
                           </button>
                         );
                       })}
@@ -333,41 +349,54 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
             </div>
 
             {/* Step 3: Breakdown of Who Owes What */}
-            <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200/80 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-zinc-900 border-b border-orange-200/60 pb-2">
+            <div className="p-4 rounded-2xl bg-orange-50/60 border border-orange-200/80 space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-zinc-900 border-b border-orange-200/60 pb-2.5">
                 <span className="flex items-center gap-1.5 text-[#963314]">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                   <span>Calculated Split Summary</span>
                 </span>
-                <span>Total: {receiptData.currency} {receiptData.total}</span>
+                <span className="text-zinc-700">Total Bill: <strong className="text-zinc-900">{receiptData.currency} {receiptData.total}</strong></span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                 {members.map((m) => {
                   const share = Math.round(memberTotals[m.name]?.amount || 0);
                   const isPayer = m.name === paidBy;
                   return (
                     <div
                       key={m.id}
-                      className="p-2 rounded-xl bg-white border border-orange-200/60 flex items-center justify-between"
+                      className="p-3 rounded-xl bg-white border border-orange-200/70 flex flex-col justify-between gap-2 shadow-2xs"
                     >
-                      <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
                         {m.avatar && (
                           <img
                             src={m.avatar}
                             alt={m.name}
-                            className="w-5 h-5 rounded-full object-cover shrink-0"
+                            className="w-7 h-7 rounded-full object-cover shrink-0 border border-zinc-100"
                           />
                         )}
-                        <span className="font-semibold text-zinc-800 truncate">{m.name.split(" ")[0]}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-zinc-900 block wrap-break-word text-xs leading-tight">
+                            {m.name}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-medium">
+                            {isPayer ? "Paid upfront" : `Owes ${paidBy.split(" ")[0]}`}
+                          </span>
+                        </div>
                       </div>
-                      <span
-                        className={`font-bold shrink-0 ${
-                          isPayer ? "text-emerald-700" : "text-[#963314]"
-                        }`}
-                      >
-                        {receiptData.currency} {share}
-                      </span>
+
+                      <div className="pt-2 border-t border-zinc-100 flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-zinc-500">
+                          {isPayer ? "Net Share" : "Share"}
+                        </span>
+                        <span
+                          className={`font-extrabold text-sm ${
+                            isPayer ? "text-emerald-700" : "text-[#963314]"
+                          }`}
+                        >
+                          {receiptData.currency} {share}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}

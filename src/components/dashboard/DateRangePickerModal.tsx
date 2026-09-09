@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 export interface DateRangePickerModalProps {
   isOpen: boolean;
@@ -69,6 +70,8 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
   onApply,
   zIndexClass = "z-50",
 }) => {
+  useBodyScrollLock(isOpen);
+
   const [selectedStart, setSelectedStart] = useState<Date | null>(initialStart);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(initialEnd);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);

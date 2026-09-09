@@ -16,7 +16,6 @@ import {
   CreditCard,
   PieChart,
   ArrowUpRight,
-  ShieldCheck,
 } from "lucide-react";
 import { ReceiptScannerModal, type ScannedReceiptData } from "./ReceiptScannerModal";
 import { BillSplitModal, type ExpenseRecord } from "./BillSplitModal";
@@ -1334,9 +1333,11 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                   return (
                     <motion.div
                       key={exp.id}
-                      layout
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.15 }}
                       onClick={() => setSelectedExpenseForReceipt(exp)}
-                      className={`relative bg-white rounded-3xl p-4 sm:p-5 border transition-all cursor-pointer shadow-2xs hover:shadow-md hover:border-zinc-300 overflow-hidden ${
+                      className={`relative bg-white rounded-3xl p-4 sm:p-5 border cursor-pointer shadow-2xs hover:shadow-md hover:border-zinc-300 transition-colors duration-150 overflow-hidden ${
                         isOwed ? "border-orange-200/90" : "border-zinc-200/80"
                       }`}
                     >
@@ -1589,40 +1590,6 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Widget 3: E-Invoice Storage & Tax Compliance */}
-            <div className="p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-2xs space-y-3.5">
-              <div className="flex items-center gap-2 text-zinc-900">
-                <div className="p-1.5 rounded-xl bg-emerald-100 text-emerald-700">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold">E-Invoices Vault</h4>
-                  <p className="text-[11px] text-zinc-400">Verified for tax &amp; travel claims</p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                {expenses.slice(0, 3).map((exp) => (
-                  <button
-                    key={exp.id}
-                    type="button"
-                    onClick={() => setSelectedExpenseForReceipt(exp)}
-                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-zinc-50 transition-colors text-left text-xs group cursor-pointer border border-transparent hover:border-zinc-200"
-                  >
-                    <div className="min-w-0 flex-1 pr-2">
-                      <p className="font-bold text-zinc-800 truncate group-hover:text-[#963314]">
-                        {exp.merchantName}
-                      </p>
-                      <p className="text-[10px] text-zinc-400 truncate">{exp.invoiceNumber}</p>
-                    </div>
-                    <span className="text-xs font-extrabold text-zinc-900 shrink-0">
-                      RM {exp.amount}
-                    </span>
-                  </button>
-                ))}
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { createWorker } from "tesseract.js";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 export interface ScannedItem {
   id: string;
@@ -115,6 +116,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   onScanComplete,
   tripDestination = "Trip",
 }) => {
+  useBodyScrollLock(isOpen);
+
   const [activeTab, setActiveTab] = useState<"camera" | "gallery" | "pdf" | "samples">("camera");
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -125,6 +128,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [ocrStatusText, setOcrStatusText] = useState("");
+  const [ocrError, setOcrError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -168,11 +172,14 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
   // Clean up stream on modal close
   useEffect(() => {
-    if (!isOpen && cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop());
-      setCameraStream(null);
+    if (!isOpen) {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        setCameraStream(null);
+      }
       setCapturedImage(null);
       setIsProcessingOcr(false);
+      setOcrError(null);
     }
   }, [isOpen, cameraStream]);
 
@@ -186,6 +193,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    setOcrError(null);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     setCapturedImage(dataUrl);
@@ -205,6 +213,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setOcrError(null);
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
@@ -212,6 +221,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       runOcrOnImage(dataUrl);
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   // Handle PDF file upload
@@ -219,6 +229,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setOcrError(null);
     // Simulate smart PDF parsing
     setIsProcessingOcr(true);
     setOcrProgress(0.3);
@@ -269,15 +280,23 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       const text = ret.data.text;
       const parsedData = parseOcrReceiptText(text, dataUrl);
       setIsProcessingOcr(false);
+
+      // Validate that receipt items were actually recognized
+      if (parsedData.items.length === 0) {
+        setOcrError(
+          "No legible receipt items or prices were detected in this image. Please upload a clear photo of a printed receipt or bill, or choose one of our sample presets."
+        );
+        return;
+      }
+
       onScanComplete(parsedData);
       onClose();
     } catch (err) {
-      console.warn("OCR worker error, falling back to smart receipt parser:", err);
+      console.warn("OCR worker error:", err);
       setIsProcessingOcr(false);
-      // Fallback to sample seafood data if OCR was unreadable
-      const fallback = SAMPLE_RECEIPTS[0].data;
-      onScanComplete({ ...fallback, receiptImage: dataUrl });
-      onClose();
+      setOcrError(
+        "Unable to read text from this image. Please ensure the receipt is well-lit and legible, or choose a sample preset."
+      );
     }
   };
 
@@ -318,15 +337,6 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       }
     }
 
-    // If OCR didn't catch clean items, use intelligent default
-    if (items.length === 0) {
-      items.push(
-        { id: `item-1`, name: "Main Course & Entrees", price: 160, assignedTo: [] },
-        { id: `item-2`, name: "Beverages & Refreshments", price: 40, assignedTo: [] },
-        { id: `item-3`, name: "Dessert & Appetizers", price: 50, assignedTo: [] }
-      );
-    }
-
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
     const total = detectedTotal > 0 ? detectedTotal : Math.round(subtotal + (detectedTax || subtotal * 0.06));
 
@@ -342,6 +352,13 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       receiptImage: imageSrc,
       category: "Food",
     };
+  };
+
+  const handleSwitchTab = (tab: "camera" | "gallery" | "pdf" | "samples") => {
+    setActiveTab(tab);
+    setOcrError(null);
+    setCapturedImage(null);
+    setCameraError(null);
   };
 
   if (!isOpen) return null;
@@ -379,10 +396,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
           <div className="grid grid-cols-4 border-b border-zinc-100 p-2 gap-1 bg-zinc-100/60 text-xs font-bold">
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("camera");
-                setCapturedImage(null);
-              }}
+              onClick={() => handleSwitchTab("camera")}
               className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === "camera"
                   ? "bg-white text-zinc-900 shadow-xs border border-zinc-200/80"
@@ -396,8 +410,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                setActiveTab("gallery");
-                setCapturedImage(null);
+                handleSwitchTab("gallery");
                 fileInputRef.current?.click();
               }}
               className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -413,7 +426,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                setActiveTab("pdf");
+                handleSwitchTab("pdf");
                 pdfInputRef.current?.click();
               }}
               className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -428,7 +441,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("samples")}
+              onClick={() => handleSwitchTab("samples")}
               className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === "samples"
                   ? "bg-white text-[#963314] shadow-xs border border-zinc-200/80"
@@ -487,13 +500,54 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
               </div>
             )}
 
+            {/* OCR Error Notice (e.g. Non-receipt image selected) */}
+            {ocrError && !isProcessingOcr && (
+              <div className="relative p-4 sm:p-5 rounded-2xl bg-red-50/90 border border-red-200 text-center space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setOcrError(null)}
+                  className="absolute top-3 right-3 p-1 text-red-400 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors cursor-pointer"
+                  title="Dismiss notice"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-red-900">No Receipt Items Detected</h4>
+                  <p className="text-xs text-red-700/90 mt-1 max-w-sm mx-auto leading-relaxed">
+                    {ocrError}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOcrError(null);
+                      setCapturedImage(null);
+                      if (activeTab === "gallery") {
+                        fileInputRef.current?.click();
+                      } else if (activeTab === "pdf") {
+                        pdfInputRef.current?.click();
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-[#963314] hover:bg-[#7d2b10] text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Choose Another Image</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* TAB 1: Live Camera Viewfinder */}
-            {activeTab === "camera" && !isProcessingOcr && (
+            {activeTab === "camera" && !isProcessingOcr && !ocrError && (
               <div className="space-y-3">
                 {capturedImage ? (
-                  <div className="space-y-3 text-center">
-                    <div className="relative rounded-2xl overflow-hidden border border-zinc-200 max-h-72 bg-black flex items-center justify-center">
-                      <img src={capturedImage} alt="Captured Receipt" className="max-h-72 object-contain" />
+                  <div className="space-y-3 text-center flex flex-col items-center">
+                    <div className="relative rounded-3xl overflow-hidden border border-zinc-200 max-h-80 bg-black flex items-center justify-center max-w-70 sm:max-w-xs w-full mx-auto shadow-md">
+                      <img src={capturedImage} alt="Captured Receipt" className="max-h-80 object-contain" />
                     </div>
                     <button
                       type="button"
@@ -508,7 +562,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     </button>
                   </div>
                 ) : cameraError ? (
-                  <div className="p-6 rounded-2xl border border-dashed border-zinc-200 text-center space-y-3 bg-zinc-50/50">
+                  <div className="p-6 rounded-2xl border border-dashed border-zinc-200 text-center space-y-3 bg-zinc-50/50 max-w-sm mx-auto">
                     <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
                     <p className="text-xs text-zinc-600 max-w-sm mx-auto">{cameraError}</p>
                     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -531,16 +585,16 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <>
-                    <div className="relative rounded-2xl overflow-hidden border border-zinc-200 bg-black aspect-3/4 max-h-80 flex items-center justify-center shadow-inner">
+                  <div className="flex flex-col items-center space-y-2.5">
+                    <div className="relative rounded-3xl overflow-hidden border border-zinc-200 bg-black aspect-3/4 w-full max-w-70 sm:max-w-xs flex items-center justify-center shadow-lg mx-auto">
                       <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
 
                       {/* Viewfinder Overlay Frame */}
-                      <div className="absolute inset-4 rounded-xl border-2 border-white/60 border-dashed pointer-events-none flex flex-col justify-between p-3">
-                        <div className="flex items-center justify-between text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded backdrop-blur-xs w-fit">
-                          <span>Align bill inside box</span>
+                      <div className="absolute inset-3 rounded-2xl border-2 border-white/70 border-dashed pointer-events-none flex flex-col justify-between p-3">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-xs w-fit">
+                          <span>Align receipt in frame</span>
                         </div>
-                        <div className="text-[10px] text-center text-white/90 bg-black/40 py-1 rounded backdrop-blur-xs">
+                        <div className="text-[10px] text-center font-medium text-white/90 bg-black/50 py-1 px-2 rounded-md backdrop-blur-xs">
                           Keep steady &amp; avoid glare
                         </div>
                       </div>
@@ -549,7 +603,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors backdrop-blur-xs cursor-pointer"
+                        className="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors backdrop-blur-xs cursor-pointer shadow-md"
                         title="Switch Camera"
                       >
                         <RefreshCw className="w-4 h-4" />
@@ -559,56 +613,30 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                       <button
                         type="button"
                         onClick={handleSnapPhoto}
-                        className="absolute bottom-3 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-4 border-white bg-[#963314] hover:bg-[#7d2b10] transition-transform active:scale-90 flex items-center justify-center shadow-lg cursor-pointer"
+                        className="absolute bottom-3 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-4 border-white bg-[#963314] hover:bg-[#7d2b10] transition-transform active:scale-90 flex items-center justify-center shadow-xl cursor-pointer"
                         title="Take Receipt Picture"
                       >
                         <div className="w-6 h-6 rounded-full bg-white/90" />
                       </button>
                     </div>
 
-                    {/* Switch / Alternative Options */}
-                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                    <div className="text-center pt-1">
                       <button
                         type="button"
                         onClick={() => nativeCameraInputRef.current?.click()}
-                        className="text-[11px] font-bold text-zinc-600 hover:text-zinc-900 px-2.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-                        title="Open native device camera application"
+                        className="text-[11px] font-semibold text-zinc-500 hover:text-[#963314] transition-colors inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Camera className="w-3.5 h-3.5 text-[#963314]" />
-                        <span>Device Camera App</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab("gallery");
-                          fileInputRef.current?.click();
-                        }}
-                        className="text-[11px] font-bold text-zinc-600 hover:text-zinc-900 px-2.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-                        title="Upload from photo library"
-                      >
-                        <ImageIcon className="w-3.5 h-3.5 text-[#963314]" />
-                        <span>Photo Gallery</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab("pdf");
-                          pdfInputRef.current?.click();
-                        }}
-                        className="text-[11px] font-bold text-zinc-600 hover:text-zinc-900 px-2.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-                        title="Attach PDF file"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-[#963314]" />
-                        <span>Attach PDF</span>
+                        <Camera className="w-3 h-3 text-[#963314]" />
+                        <span>Use device camera app instead</span>
                       </button>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             )}
 
             {/* TAB 2: Photo Gallery Upload */}
-            {activeTab === "gallery" && !isProcessingOcr && (
+            {activeTab === "gallery" && !isProcessingOcr && !ocrError && (
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="p-8 rounded-2xl border-2 border-dashed border-zinc-200 hover:border-[#963314] transition-all text-center space-y-3 cursor-pointer bg-zinc-50/60 hover:bg-orange-50/30"
@@ -631,7 +659,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
             )}
 
             {/* TAB 3: PDF Attachment */}
-            {activeTab === "pdf" && !isProcessingOcr && (
+            {activeTab === "pdf" && !isProcessingOcr && !ocrError && (
               <div
                 onClick={() => pdfInputRef.current?.click()}
                 className="p-8 rounded-2xl border-2 border-dashed border-zinc-200 hover:border-[#963314] transition-all text-center space-y-3 cursor-pointer bg-zinc-50/60 hover:bg-orange-50/30"

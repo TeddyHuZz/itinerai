@@ -38,7 +38,7 @@ export const FooterSection: React.FC<FooterSectionProps> = ({
 
           <button
             onClick={() => onOpenAuth?.("signup")}
-            className="px-8 py-3.5 rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-[15px] transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            className="px-8 py-3.5 rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-[15px] transition-all shadow-md hover:shadow-zinc-950/20 hover:scale-[1.03] active:scale-[0.96] cursor-pointer"
           >
             Get started for free
           </button>
@@ -99,15 +99,19 @@ export const FooterSection: React.FC<FooterSectionProps> = ({
             <a href="#customers" className="text-zinc-600 hover:text-zinc-950 transition-colors">Customers</a>
             <button
               onClick={() => onOpenLegal?.("terms")}
-              className="text-left text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
+              className="group text-left text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
             >
-              Terms &amp; conditions
+              <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-150">
+                Terms &amp; conditions
+              </span>
             </button>
             <button
               onClick={() => onOpenLegal?.("privacy")}
-              className="text-left text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
+              className="group text-left text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
             >
-              Privacy policy
+              <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-150">
+                Privacy policy
+              </span>
             </button>
             <a href="#manifesto" className="text-zinc-600 hover:text-zinc-950 transition-colors">AI Manifesto</a>
             <a href="#trust" className="text-zinc-600 hover:text-zinc-950 transition-colors inline-flex items-center gap-1">

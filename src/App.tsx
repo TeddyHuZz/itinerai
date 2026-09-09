@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { CardShowcaseSection } from "@/components/landing/CardShowcaseSection";
@@ -86,22 +87,26 @@ export default function App() {
         onOpenLegal={handleOpenLegal}
       />
 
-      {/* Separate Dedicated Auth / Sign Up / Log In Page View */}
-      {authModal.isOpen && (
-        <AuthPage
-          initialMode={authModal.mode}
-          onClose={handleCloseAuth}
-          onOpenLegal={handleOpenLegal}
-        />
-      )}
+      {/* Separate Dedicated Auth / Sign Up / Log In Page View with Cinematic Fade */}
+      <AnimatePresence>
+        {authModal.isOpen && (
+          <AuthPage
+            initialMode={authModal.mode}
+            onClose={handleCloseAuth}
+            onOpenLegal={handleOpenLegal}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Terms of Service & Privacy Policy Viewer Modal */}
-      {legalModal.isOpen && (
-        <LegalModal
-          initialType={legalModal.type}
-          onClose={handleCloseLegal}
-        />
-      )}
+      {/* Terms of Service & Privacy Policy Viewer Modal with Smooth Slide Transition */}
+      <AnimatePresence>
+        {legalModal.isOpen && (
+          <LegalModal
+            initialType={legalModal.type}
+            onClose={handleCloseLegal}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -66,13 +66,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
           <div className="hidden md:flex items-center gap-6">
             <button
               onClick={() => onOpenAuth?.("login")}
-              className="text-[14px] font-medium text-zinc-800 hover:text-zinc-950 transition-colors cursor-pointer"
+              className="text-[14px] font-medium text-zinc-800 hover:text-zinc-950 active:scale-95 transition-all cursor-pointer"
             >
               Log in
             </button>
             <button
               onClick={() => onOpenAuth?.("signup")}
-              className={`rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-medium transition-all shadow-xs cursor-pointer ${
+              className={`rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-medium transition-all shadow-xs hover:scale-[1.03] active:scale-[0.96] cursor-pointer ${
                 isScrolled ? "px-4 py-2 text-[13px]" : "px-5 py-2.5 text-[14px]"
               }`}
             >

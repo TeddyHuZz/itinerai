@@ -50,7 +50,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex flex-col md:flex-row bg-white overflow-y-auto select-none">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.99 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.99 }}
+      transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-100 flex flex-col md:flex-row bg-white overflow-y-auto select-none"
+    >
       {/* ========================================================================= */}
       {/* LEFT COLUMN: Scenic Mountain Background & Brand Showcase                  */}
       {/* ========================================================================= */}
@@ -70,22 +76,26 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         {/* Top Header Controls & Product Title */}
         <div className="relative z-10 flex flex-col items-start space-y-6">
           <div className="flex items-center justify-between w-full">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
               onClick={onClose}
-              className="px-4 py-2 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg active:scale-95"
+              className="group px-4 py-2 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 duration-200" />
               <span>Back to home</span>
-            </button>
+            </motion.button>
 
             {/* Mobile close button (shown only on small screens on the hero image) */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
               onClick={onClose}
               className="md:hidden w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-lg"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Product Title & Tagline (positioned below back button) */}
@@ -121,46 +131,62 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
           <div className="hidden md:block" />
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={onClose}
-            className="hidden md:flex w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 items-center justify-center transition-all cursor-pointer"
+            className="hidden md:flex w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 items-center justify-center transition-all cursor-pointer shadow-2xs"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
-          </button>
+          </motion.button>
         </div>
 
         {/* Center Auth Form Container */}
         <div className="w-full max-w-md mx-auto my-auto py-6">
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center p-1 rounded-2xl bg-zinc-100 border border-zinc-200/80 mb-8">
+          {/* Mode Switcher Tabs with Animated Sliding Pill */}
+          <div className="relative flex items-center p-1 rounded-2xl bg-zinc-100 border border-zinc-200/80 mb-8">
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
+              className={`relative z-10 flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors duration-200 cursor-pointer ${
                 mode === "login"
-                  ? "bg-white text-zinc-900 shadow-xs"
+                  ? "text-zinc-950"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
-              Log In
+              {mode === "login" && (
+                <motion.div
+                  layoutId="auth-tab-pill"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                  className="absolute inset-0 bg-white rounded-xl shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Log In</span>
             </button>
             <button
               type="button"
               onClick={() => setMode("signup")}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
+              className={`relative z-10 flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors duration-200 cursor-pointer ${
                 mode === "signup"
-                  ? "bg-white text-zinc-900 shadow-xs"
+                  ? "text-zinc-950"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
-              Sign Up
+              {mode === "signup" && (
+                <motion.div
+                  layoutId="auth-tab-pill"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                  className="absolute inset-0 bg-white rounded-xl shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Sign Up</span>
             </button>
           </div>
 
           <AnimatePresence mode="wait">
             {submitted ? (
-              /* Success Confirmation State */
+              /* Success Confirmation State with Redirecting Animation */
               <motion.div
                 key="success"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -175,8 +201,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   {mode === "signup" ? "Account Created!" : "Welcome back!"}
                 </h3>
                 <p className="text-sm text-zinc-500 mt-2 max-w-xs">
-                  Preparing your trips and collaborative itineraries...
+                  Redirecting to your collaborative workspace...
                 </p>
+
+                {/* Animated Redirect Progress Bar */}
+                <div className="w-48 h-1.5 bg-zinc-100 rounded-full overflow-hidden mt-6">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="h-full bg-emerald-500 rounded-full"
+                  />
+                </div>
               </motion.div>
             ) : mode === "login" ? (
               /* View: Log In Form */
@@ -466,7 +502,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <button
             type="button"
             onClick={() => onOpenLegal?.("terms")}
-            className="text-[#a33917] hover:underline font-medium cursor-pointer"
+            className="text-[#a33917] hover:underline font-medium cursor-pointer transition-colors"
           >
             Terms of Service
           </button>{" "}
@@ -474,14 +510,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <button
             type="button"
             onClick={() => onOpenLegal?.("privacy")}
-            className="text-[#a33917] hover:underline font-medium cursor-pointer"
+            className="text-[#a33917] hover:underline font-medium cursor-pointer transition-colors"
           >
             Privacy Policy
           </button>
           .
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

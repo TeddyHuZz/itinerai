@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   X,
   ArrowLeft,
@@ -70,20 +71,28 @@ export const LegalModal: React.FC<LegalModalProps> = ({
   const currentSections = activeTab === "terms" ? termsSections : privacySections;
 
   return (
-    <div className="fixed inset-0 z-110 flex flex-col bg-zinc-50 text-zinc-900 overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.99, y: 14 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.99, y: 14 }}
+      transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-110 flex flex-col bg-zinc-50 text-zinc-900 overflow-hidden"
+    >
       {/* ========================================================================= */}
       {/* TOP STICKY APP BAR                                                        */}
       {/* ========================================================================= */}
       <header className="sticky top-0 z-20 w-full bg-white/90 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-3">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
             onClick={onClose}
-            className="p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors flex items-center gap-1.5 text-xs sm:text-sm font-semibold cursor-pointer"
+            className="group p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors flex items-center gap-1.5 text-xs sm:text-sm font-semibold cursor-pointer"
             aria-label="Back"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 duration-200" />
             <span className="hidden sm:inline">Back to Itinerai</span>
-          </button>
+          </motion.button>
 
           <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
 
@@ -97,48 +106,66 @@ export const LegalModal: React.FC<LegalModalProps> = ({
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center p-1 rounded-xl bg-zinc-100 border border-zinc-200/80">
+        {/* Tab Switcher with Animated Sliding Pill */}
+        <div className="relative flex items-center p-1 rounded-xl bg-zinc-100 border border-zinc-200/80">
           <button
             onClick={() => setActiveTab("terms")}
-            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`relative z-10 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "terms"
-                ? "bg-white text-zinc-950 shadow-xs"
+                ? "text-zinc-950"
                 : "text-zinc-500 hover:text-zinc-900"
             }`}
           >
-            Terms of Service
+            {activeTab === "terms" && (
+              <motion.div
+                layoutId="legal-tab-pill"
+                transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                className="absolute inset-0 bg-white rounded-lg shadow-xs"
+              />
+            )}
+            <span className="relative z-10">Terms of Service</span>
           </button>
           <button
             onClick={() => setActiveTab("privacy")}
-            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`relative z-10 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "privacy"
-                ? "bg-white text-zinc-950 shadow-xs"
+                ? "text-zinc-950"
                 : "text-zinc-500 hover:text-zinc-900"
             }`}
           >
-            Privacy Policy
+            {activeTab === "privacy" && (
+              <motion.div
+                layoutId="legal-tab-pill"
+                transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                className="absolute inset-0 bg-white rounded-lg shadow-xs"
+              />
+            )}
+            <span className="relative z-10">Privacy Policy</span>
           </button>
         </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handlePrint}
             title="Print document"
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 text-xs font-medium transition-colors cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
       </header>
 
@@ -559,6 +586,6 @@ export const LegalModal: React.FC<LegalModalProps> = ({
           </div>
         </main>
       </div>
-    </div>
+    </motion.div>
   );
 };

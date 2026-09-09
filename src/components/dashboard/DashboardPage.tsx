@@ -24,6 +24,7 @@ import {
 import { DateRangePickerModal } from "./DateRangePickerModal";
 import { ItineraryView, INITIAL_TRIPS } from "../itinerary/ItineraryView";
 import { TripChatView } from "../chat/TripChatView";
+import { ExpensesView } from "../expenses/ExpensesView";
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -658,6 +659,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             setBookingNotice(`Invite link for ${trip.destination} copied to clipboard!`);
             setTimeout(() => setBookingNotice(null), 3000);
           }}
+        />
+      ) : currentNav === "expenses" ? (
+        <ExpensesView
+          trips={INITIAL_TRIPS}
+          activeTripId={activeChatTripId}
+          onSelectTrip={(trip) => setActiveChatTripId(trip.id)}
+          onOpenItinerary={() => setCurrentNav("itinerary")}
         />
       ) : (
         <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 flex flex-col pb-24 md:pb-12">

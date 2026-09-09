@@ -3,7 +3,7 @@ import { Wand2, Grid, Layers, FileDown } from "lucide-react";
 
 export const ScaleFeaturesSection: React.FC = () => {
   return (
-    <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none" id="scale">
+    <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none scroll-mt-20" id="scale">
       <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. TOP ROW: LEFT HEADING + 2 RIGHT FEATURE CARDS                          */}

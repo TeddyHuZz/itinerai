@@ -2,7 +2,7 @@ import React from "react";
 
 export const TestimonialQuoteSection: React.FC = () => {
   return (
-    <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none" id="customers">
+    <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none scroll-mt-20" id="customers">
       <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
         {/* Massive Testimonial Quote */}
         <h2 className="text-[2.75rem] sm:text-[4.25rem] md:text-[5.25rem] font-black tracking-[-0.035em] text-zinc-950 leading-[1.06] mb-12 sm:mb-16">

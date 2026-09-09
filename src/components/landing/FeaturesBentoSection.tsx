@@ -126,7 +126,7 @@ const BENTO_CARDS: BentoFeatureCard[] = [
 
 export const FeaturesBentoSection: React.FC = () => {
   return (
-    <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none" id="features">
+    <section className="w-full bg-white pt-24 sm:pt-36 pb-36 select-none scroll-mt-20" id="features">
       <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. SECTION HEADER (Jitter Exact Style)                                   */}

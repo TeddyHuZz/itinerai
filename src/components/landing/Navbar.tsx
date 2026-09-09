@@ -45,19 +45,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
               <ItineraiLogo size={isScrolled ? "sm" : "md"} />
             </a>
 
-            {/* Center Navigation Links */}
-            <nav className="hidden md:flex items-center gap-8 text-[14px] font-medium text-zinc-800">
+            {/* Center Navigation Links (Matching Actual Landing Page Sections) */}
+            <nav className="hidden md:flex items-center gap-8 text-[14px] font-medium text-zinc-700">
               <a href="#product" className="hover:text-zinc-950 transition-colors">
                 Product
               </a>
+              <a href="#features" className="hover:text-zinc-950 transition-colors">
+                Features
+              </a>
+              <a href="#scale" className="hover:text-zinc-950 transition-colors">
+                Groups
+              </a>
               <a href="#customers" className="hover:text-zinc-950 transition-colors">
                 Customers
-              </a>
-              <a href="#templates" className="hover:text-zinc-950 transition-colors">
-                Templates
-              </a>
-              <a href="#pricing" className="hover:text-zinc-950 transition-colors">
-                Pricing
               </a>
             </nav>
           </div>
@@ -101,25 +101,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
               Product
             </a>
             <a
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-medium text-zinc-800 py-1"
+            >
+              Features
+            </a>
+            <a
+              href="#scale"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-medium text-zinc-800 py-1"
+            >
+              Groups
+            </a>
+            <a
               href="#customers"
               onClick={() => setMobileMenuOpen(false)}
               className="text-sm font-medium text-zinc-800 py-1"
             >
               Customers
-            </a>
-            <a
-              href="#templates"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-sm font-medium text-zinc-800 py-1"
-            >
-              Templates
-            </a>
-            <a
-              href="#pricing"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-sm font-medium text-zinc-800 py-1"
-            >
-              Pricing
             </a>
             <div className="pt-3 border-t border-zinc-100 flex flex-col gap-3">
               <button

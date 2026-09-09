@@ -13,7 +13,7 @@ export const VideoShowcaseSection: React.FC<VideoShowcaseSectionProps> = ({
   posterSrc,
 }) => {
   return (
-    <section className="w-full bg-white pt-24 sm:pt-36 pb-28 select-none" id="product">
+    <section className="w-full bg-white pt-24 sm:pt-36 pb-28 select-none scroll-mt-20" id="product">
       <div className="max-w-350 mx-auto px-6 sm:px-12">
         {/* ========================================================================= */}
         {/* 1. HUGE BOLD HEADING (Jitter Exact Style)                                */}

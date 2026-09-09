@@ -10,6 +10,10 @@
     border-color: rgba(228, 228, 231, 0.8);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: #ffffff;
     color: #09090b;

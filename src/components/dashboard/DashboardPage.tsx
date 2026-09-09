@@ -19,8 +19,10 @@ import {
   ChevronDown,
   LayoutList,
   LayoutGrid,
+  Globe,
 } from "lucide-react";
 import { DateRangePickerModal } from "./DateRangePickerModal";
+import { ItineraryView } from "../itinerary/ItineraryView";
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -583,6 +585,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
 
             <button
+              type="button"
+              title="Region & Currency"
+              className="w-8 h-8 rounded-full border border-zinc-200 hover:bg-zinc-100 flex items-center justify-center text-zinc-600 transition-colors cursor-pointer"
+            >
+              <Globe className="w-4 h-4" />
+            </button>
+
+            <button
               onClick={onLogout}
               className="px-3 py-1.5 rounded-xl border border-zinc-200 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
@@ -612,9 +622,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </AnimatePresence>
 
       {/* ======================================================================= */}
-      {/* 2. MAIN SEARCH TOOLBAR & CATEGORY CONTROLS                              */}
+      {/* 2. MAIN DYNAMIC VIEW: ITINERARY ("YOUR ESCAPES") OR SEARCH HUB         */}
       {/* ======================================================================= */}
-      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 flex flex-col pb-24 md:pb-12">
+      {currentNav === "itinerary" ? (
+        <ItineraryView onNavigateToSearch={() => setCurrentNav("search")} />
+      ) : (
+        <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 flex flex-col pb-24 md:pb-12">
         {/* Search Bar */}
         <div className="w-full mb-6">
           <form
@@ -1418,6 +1431,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </>
         )}
       </main>
+      )}
 
       {/* ======================================================================= */}
       {/* 5. BOTTOM NAVIGATION BAR (Mobile Only)                                  */}

@@ -15,6 +15,7 @@ export interface DateRangePickerModalProps {
   startDate: Date | null;
   endDate: Date | null;
   onApply: (start: Date | null, end: Date | null, formattedStr: string) => void;
+  zIndexClass?: string;
 }
 
 const MONTH_NAMES = [
@@ -66,6 +67,7 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
   startDate: initialStart,
   endDate: initialEnd,
   onApply,
+  zIndexClass = "z-50",
 }) => {
   const [selectedStart, setSelectedStart] = useState<Date | null>(initialStart);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(initialEnd);
@@ -196,7 +198,7 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/45 backdrop-blur-xs">
+      <div className={`fixed inset-0 ${zIndexClass} flex items-center justify-center p-3 sm:p-4 bg-zinc-950/45 backdrop-blur-xs`}>
         {/* Backdrop click to close */}
         <div className="absolute inset-0" onClick={onClose} />
 

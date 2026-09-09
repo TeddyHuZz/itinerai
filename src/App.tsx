@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { CardShowcaseSection } from "@/components/landing/CardShowcaseSection";
@@ -9,16 +10,33 @@ import { TestimonialQuoteSection } from "@/components/landing/TestimonialQuoteSe
 import { ScaleFeaturesSection } from "@/components/landing/ScaleFeaturesSection";
 import { TestimonialQuoteSecondSection } from "@/components/landing/TestimonialQuoteSecondSection";
 import { FooterSection } from "@/components/landing/FooterSection";
+import { AuthPage } from "@/components/auth/AuthPage";
 
 export default function App() {
+  const [authModal, setAuthModal] = useState<{
+    isOpen: boolean;
+    mode: "choose" | "signup" | "login";
+  }>({
+    isOpen: false,
+    mode: "choose",
+  });
+
+  const handleOpenAuth = (mode: "choose" | "signup" | "login" = "choose") => {
+    setAuthModal({ isOpen: true, mode });
+  };
+
+  const handleCloseAuth = () => {
+    setAuthModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-purple-200 selection:text-zinc-950">
       {/* Dynamic Floating Navbar on Scroll */}
-      <Navbar />
+      <Navbar onOpenAuth={handleOpenAuth} />
 
       <main>
         {/* Section 1: Jitter Exact Hero with 3D Flipping Logos */}
-        <HeroSection />
+        <HeroSection onOpenAuth={handleOpenAuth} />
 
         {/* Section 2: Infinite Left-Sliding Cards */}
         <CardShowcaseSection />
@@ -46,7 +64,15 @@ export default function App() {
       </main>
 
       {/* Section 10: "Try Itinerai today" CTA + 5-Col Footer Links + Black Newsletter Banner */}
-      <FooterSection />
+      <FooterSection onOpenAuth={handleOpenAuth} />
+
+      {/* Separate Dedicated Auth / Sign Up / Log In Page View */}
+      {authModal.isOpen && (
+        <AuthPage
+          initialMode={authModal.mode}
+          onClose={handleCloseAuth}
+        />
+      )}
     </div>
   );
 }

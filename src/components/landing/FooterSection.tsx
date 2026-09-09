@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 
-export const FooterSection: React.FC = () => {
+interface FooterSectionProps {
+  onOpenAuth?: (mode: "signup" | "login") => void;
+}
+
+export const FooterSection: React.FC<FooterSectionProps> = ({ onOpenAuth }) => {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -28,12 +32,12 @@ export const FooterSection: React.FC = () => {
             Start creating instantly.
           </p>
 
-          <a
-            href="#try"
-            className="px-8 py-3.5 rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-[15px] transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98]"
+          <button
+            onClick={() => onOpenAuth?.("signup")}
+            className="px-8 py-3.5 rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-[15px] transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             Get started for free
-          </a>
+          </button>
         </div>
 
         {/* ========================================================================= */}

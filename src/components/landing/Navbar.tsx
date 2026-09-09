@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { ItineraiLogo } from "@/components/ui/ItineraiLogo";
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  onOpenAuth?: (mode: "login" | "signup") => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -60,20 +64,20 @@ export const Navbar: React.FC = () => {
 
           {/* Right Actions (Jitter Style) */}
           <div className="hidden md:flex items-center gap-6">
-            <a
-              href="#login"
-              className="text-[14px] font-medium text-zinc-800 hover:text-zinc-950 transition-colors"
+            <button
+              onClick={() => onOpenAuth?.("login")}
+              className="text-[14px] font-medium text-zinc-800 hover:text-zinc-950 transition-colors cursor-pointer"
             >
               Log in
-            </a>
-            <a
-              href="#try"
-              className={`rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-medium transition-all shadow-xs ${
+            </button>
+            <button
+              onClick={() => onOpenAuth?.("signup")}
+              className={`rounded-full bg-zinc-950 hover:bg-zinc-800 text-white font-medium transition-all shadow-xs cursor-pointer ${
                 isScrolled ? "px-4 py-2 text-[13px]" : "px-5 py-2.5 text-[14px]"
               }`}
             >
               Try for free
-            </a>
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -118,15 +122,24 @@ export const Navbar: React.FC = () => {
               Pricing
             </a>
             <div className="pt-3 border-t border-zinc-100 flex flex-col gap-3">
-              <a href="#login" className="text-sm font-medium text-zinc-800 py-1">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth?.("login");
+                }}
+                className="text-sm font-medium text-zinc-800 py-1 text-left cursor-pointer"
+              >
                 Log in
-              </a>
-              <a
-                href="#try"
-                className="w-full text-center px-5 py-2.5 rounded-full bg-zinc-950 text-white text-sm font-medium"
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth?.("signup");
+                }}
+                className="w-full text-center px-5 py-2.5 rounded-full bg-zinc-950 text-white text-sm font-medium cursor-pointer"
               >
                 Try for free
-              </a>
+              </button>
             </div>
           </div>
         )}

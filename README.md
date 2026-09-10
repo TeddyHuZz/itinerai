@@ -36,7 +36,7 @@
 
 > 📹 **Video Presentation:** \[Unlisted YouTube Link\]
 >
-> 📑 **Presentation Slides:** \[Public Link\]
+> 📑 **Presentation Slides:** [ItinerAI — AI-Powered Group Travel Planner](https://gamma.app/docs/ItinerAI-AI-Powered-Group-Travel-Planner-vkeavomhz97jjtp)
 
 ---
 

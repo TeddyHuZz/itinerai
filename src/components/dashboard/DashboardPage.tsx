@@ -110,7 +110,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "14:00",
     arrCode: "SIN",
     platform: "Amadeus",
-    platformColor: "bg-[#f15a24] hover:bg-[#e04812]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 98,
     badge: "Top Carrier",
     badgeColor: "bg-blue-100 text-blue-800",
@@ -132,7 +132,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "18:00",
     arrCode: "SIN",
     platform: "Amadeus",
-    platformColor: "bg-[#f15a24] hover:bg-[#e04812]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 94,
     badge: "Popular Deal",
     badgeColor: "bg-rose-100 text-rose-800",
@@ -154,7 +154,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "14:30",
     arrCode: "SIN",
     platform: "Amadeus",
-    platformColor: "bg-[#f15a24] hover:bg-[#e04812]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 78,
   },
   {
@@ -174,7 +174,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "20:20",
     arrCode: "SIN",
     platform: "Skyscanner",
-    platformColor: "bg-[#00a698] hover:bg-[#008f82]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 96,
     badge: "Cheapest",
     badgeColor: "bg-emerald-100 text-emerald-800",
@@ -196,7 +196,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "15:40",
     arrCode: "SIN",
     platform: "Skyscanner",
-    platformColor: "bg-[#00a698] hover:bg-[#008f82]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 88,
   },
   {
@@ -216,7 +216,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "11:05",
     arrCode: "SIN",
     platform: "Amadeus",
-    platformColor: "bg-[#f15a24] hover:bg-[#e04812]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 91,
     badge: "Early Bird",
     badgeColor: "bg-amber-100 text-amber-800",
@@ -238,7 +238,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "22:50",
     arrCode: "SIN",
     platform: "Expedia",
-    platformColor: "bg-[#00355f] hover:bg-[#002444]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 92,
     badge: "Fastest",
     badgeColor: "bg-purple-100 text-purple-800",
@@ -260,7 +260,7 @@ const ALL_FLIGHTS: FlightItem[] = [
     arrTime: "18:30",
     arrCode: "SIN",
     platform: "Amadeus",
-    platformColor: "bg-[#f15a24] hover:bg-[#e04812]",
+    platformColor: "bg-zinc-900 hover:bg-zinc-800",
     recommendedScore: 86,
   },
 ];
@@ -1398,7 +1398,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       <button
                         type="button"
                         onClick={() => handleBook(hotel.name, hotel.platform)}
-                        className="px-3.5 py-2 rounded-xl bg-[#f15a24] hover:bg-[#e04812] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+                        className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         <span>Book on {hotel.platform}</span>
@@ -1473,7 +1473,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           <button
                             type="button"
                             onClick={() => handleBook(hotel.name, hotel.platform)}
-                            className="px-3.5 py-2 rounded-xl bg-[#f15a24] hover:bg-[#e04812] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+                            className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                             <span>Book on {hotel.platform}</span>
@@ -1550,7 +1550,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             <button
                               type="button"
                               onClick={() => handleBook(hotel.name, hotel.platform)}
-                              className="px-5 py-2.5 rounded-xl bg-[#f15a24] hover:bg-[#e04812] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
+                              className="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
                             >
                               <ExternalLink className="w-4 h-4" />
                               <span>Book on {hotel.platform}</span>

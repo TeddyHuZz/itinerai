@@ -27,8 +27,8 @@
 
 ## 👥 Team Axiom
 
-| Member | Role | Responsibilities |
-|--------|------|------------------|
+| Member | Role |
+|--------|------|
 | **Kee Wen Fei** | Full-Stack Engineer |
 | **Chen Jun Voon** | Full-Stack Engineer |
 
@@ -82,7 +82,33 @@ graph LR
 - **Serviceable Available Market (SAM)**: Millennial and Gen-Z group & social travel — **$340 Billion**.
 - **Serviceable Obtainable Market (SOM)**: Digital-native Southeast Asian & APAC independent group travelers — **$24 Million**.
 - **Inherent Viral Growth Loop**: Every trip organizer invites **3 to 5 travel companions** via share link, turning passive participants into new trip creators without paid customer acquisition costs.
-- **Future B2B Expansion**: White-label licensing for corporate retreat planners, student tour agencies, and official regional tourism boards (e.g. Tourism Malaysia, Japan National Tourism Organization).
+
+### 1.5 Business Model & Monetization Strategy
+
+Because ItinerAI executes LLM inference **100% in-browser via WebGPU**, our cloud compute cost is effectively **$0.00**. This gives ItinerAI an unprecedented **~95% gross margin**, allowing us to run a highly profitable multi-stream business model:
+
+```mermaid
+graph TD
+    A["💰 ItinerAI Monetization Engines"]
+    A --> B["1. Affiliate OTA Commissions<br>(3% - 8% on Flights & Stays)"]
+    A --> C["2. ItinerAI Pro (Freemium)<br>($4.99/mo for Power Organizers)"]
+    A --> D["3. B2B Corporate Retreat SaaS<br>($15/seat/mo with Tax E-Invoicing)"]
+    A --> E["4. Sponsored Local Merchant Spots<br>(Verified Dining & Activity Bids)"]
+```
+
+| Revenue Stream | Target Customer | Pricing & Structure | Estimated Contribution |
+|----------------|-----------------|---------------------|------------------------|
+| **1. Affiliate Booking Commissions** | Group members booking flights, hotels, and activities | **3% – 8% commission** per completed booking via integrated OTA partners (Amadeus, Skyscanner, Booking.com, Airbnb, Klook, Viator). Directly monetizes the booking intent already captured in our search modules. | **50% of revenue** |
+| **2. Freemium Subscription (*ItinerAI Pro*)** | Frequent travel planners, digital nomads, and group leaders | **$4.99 / month** or **$39 / year**:<br>• Unlimited active escapes & trip archives<br>• Advanced bulk PDF itinerary & expense exports<br>• Offline mode with local SQLite sync<br>• Custom passport chop creator | **25% of revenue** |
+| **3. B2B Corporate Offsite & Student SaaS** | Companies, startups, university clubs, and tour agencies | **$15 / user / month**:<br>• Corporate team retreat budgeting & per-diem controls<br>• Multi-department LHDN/tax e-invoice reconciliation<br>• Centralized travel policy approvals | **15% of revenue** |
+| **4. Verified Local Merchant Promotions** | Authentic local dining, tea houses, and craft workshops | **Cost-Per-Click (CPC) / Feature Placement** ($0.50 – $2.00 per lead): Local businesses bid to appear in contextual AI decision polls while strictly maintaining Wikipedia-grounded authenticity standards. | **10% of revenue** |
+
+#### 💡 The Unfair Financial Advantage: Zero AI Server Burden
+| Cost Factor | Traditional Cloud LLM App (ChatGPT Wrappers) | ItinerAI WebGPU Architecture |
+|-------------|----------------------------------------------|------------------------------|
+| **10,000 MAU API Inference Cost** | ~$18,000 / month ($0.003/query × 20 queries/day) | **$0.00 / month** (Runs on user GPU) |
+| **Gross Margin** | 30% – 50% (eaten by OpenAI / Anthropic bills) | **~95%** (Pure software margin) |
+| **Break-Even Point** | Requires >2,500 paying subscribers | **Profitable from Day 1** with first affiliate booking |
 
 ---
 

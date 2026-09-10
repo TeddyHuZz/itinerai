@@ -164,16 +164,6 @@ timeline
    - *Refinement*: Integrated client-side OCR (Tesseract.js) to scan paper receipts, auto-calculate net multi-party debts, and generate certified **LHDN-compliant digital E-Invoices** with tamper-evident QR codes.
    - *Gamification*: Added collectible Japanese-style **Passport Chops** to celebrate completed escapes.
 
-### 2.4 Mentor Consultation & Feedback Integration
-
-During development, we actively consulted technical and design mentors. Their specific feedback directly shaped the final build:
-
-| Mentor Domain | Specific Feedback Received | Concrete Action & Implementation |
-|---------------|----------------------------|----------------------------------|
-| **AI Systems Mentor** | *"WebGPU is cutting-edge, but first-time model loading can feel jarring if users don't see what's happening behind the scenes. Furthermore, small 1B parameter models will struggle with obscure geographic coordinates."* | 1. Implemented a **visual progressive initialization progress bar** with cached WebGPU shaders.<br>2. Built a **hybrid fallback engine** with local Haversine landmark dictionaries to guarantee instantaneous, accurate transit calculations regardless of model load state. |
-| **Product & UX Mentor** | *"If group planning requires everyone to download an app or sign up before they can see anything, your viral loop will die. Companions want instant gratification."* | 1. Built a **one-click shareable trip modal** (`trip_share_modal.png`) where companions can view itineraries and planned highlights without friction.<br>2. Added a one-click **Instant Guest Demo** on the landing page for judges and users. |
-| **Fintech & Legal Mentor** | *"Generic split apps only show arbitrary numbers. When people travel overseas, disputes arise over tax, service charges, and non-itemized totals. In Malaysia and APAC, e-invoicing is becoming mandatory."* | 1. Integrated Tesseract.js client-side OCR for itemized receipt capture.<br>2. Designed the **LHDN-Compliant Digital E-Invoice Modal** with unique UUIDs, QR verification, and companion fiscal apportionment breakdown. |
-
 ---
 
 ## 3. Creativity & Novelty (15%)

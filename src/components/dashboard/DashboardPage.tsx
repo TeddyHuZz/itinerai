@@ -4,7 +4,6 @@ import {
   MapPin,
   Calendar,
   Search,
-  Award,
   Plane,
   CalendarDays,
   Wallet,
@@ -18,13 +17,13 @@ import {
   ChevronDown,
   LayoutList,
   LayoutGrid,
-  Globe,
   MessageSquare,
 } from "lucide-react";
 import { DateRangePickerModal } from "./DateRangePickerModal";
 import { ItineraryView, INITIAL_TRIPS } from "../itinerary/ItineraryView";
 import { TripChatView } from "../chat/TripChatView";
 import { ExpensesView } from "../expenses/ExpensesView";
+import { UserProfileView } from "../profile/UserProfileView";
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -404,7 +403,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [dates, setDates] = useState("Oct 12 - 18 (6 nights)");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"flights" | "hotels">("flights");
-  const [currentNav, setCurrentNav] = useState<"search" | "itinerary" | "team" | "expenses">("search");
+  const [currentNav, setCurrentNav] = useState<"search" | "itinerary" | "team" | "expenses" | "profile">("search");
   const [activeChatTripId, setActiveChatTripId] = useState<string>("trip-bali");
   const [isSearching, setIsSearching] = useState(false);
   const [bookingNotice, setBookingNotice] = useState<string | null>(null);
@@ -515,22 +514,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Brand & User Profile */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#963314]/30 shrink-0 bg-amber-100">
+            <button
+              type="button"
+              onClick={() => setCurrentNav("profile")}
+              className={`w-10 h-10 rounded-full overflow-hidden ring-2 transition-all cursor-pointer relative group ${
+                currentNav === "profile"
+                  ? "ring-[#963314] ring-offset-2 scale-105 shadow-sm"
+                  : "ring-[#963314]/30 hover:ring-[#963314] hover:scale-105"
+              } shrink-0 bg-amber-100`}
+              title="Click to view Alex Morgan's profile & passport chops"
+              aria-label="View user profile and achievements"
+            >
               <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
                 alt={user.name}
                 className="w-full h-full object-cover"
               />
-            </div>
+            </button>
 
-            <div className="text-left">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#963314] select-none leading-none">
+            <button
+              type="button"
+              onClick={() => setCurrentNav("search")}
+              className="text-left cursor-pointer group"
+            >
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#963314] select-none leading-none group-hover:opacity-90 transition-opacity">
                 Itenerai
               </h1>
               <span className="hidden sm:block text-[11px] text-zinc-500 font-medium mt-0.5">
                 Trip Hub
               </span>
-            </div>
+            </button>
           </div>
 
           {/* Desktop Navigation Links */}
@@ -587,18 +600,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-900 text-xs font-bold border border-amber-500/20">
-              <Award className="w-3.5 h-3.5 text-amber-600" />
-              <span>Level 3 · 450 pts</span>
-            </div>
-
-            <button
-              type="button"
-              title="Region & Currency"
-              className="w-8 h-8 rounded-full border border-zinc-200 hover:bg-zinc-100 flex items-center justify-center text-zinc-600 transition-colors cursor-pointer"
-            >
-              <Globe className="w-4 h-4" />
-            </button>
 
             <button
               onClick={onLogout}
@@ -630,9 +631,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </AnimatePresence>
 
       {/* ======================================================================= */}
-      {/* 2. MAIN DYNAMIC VIEW: ITINERARY ("YOUR ESCAPES") OR SEARCH HUB         */}
+      {/* 2. MAIN DYNAMIC VIEW: PROFILE, ITINERARY, TEAM, EXPENSES, OR SEARCH HUB */}
       {/* ======================================================================= */}
-      {currentNav === "itinerary" ? (
+      {currentNav === "profile" ? (
+        <UserProfileView
+          onBack={() => setCurrentNav("search")}
+          onOpenTrip={(tripId) => {
+            setActiveChatTripId(tripId);
+            setCurrentNav("itinerary");
+          }}
+          initialUser={{
+            name: user.name,
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+            location: "Kuala Lumpur, Malaysia",
+            job: "Product Designer & Travel Enthusiast",
+            languages: "English, Chinese, and Malay",
+            bio: "I'm Alex, I love traveling and exploring new places with friends. Always looking for hidden cafes, scenic hikes, local food markets, and cultural immersion.",
+          }}
+        />
+      ) : currentNav === "itinerary" ? (
         <ItineraryView
           onNavigateToSearch={(prefill) => {
             if (prefill?.destination) {
@@ -1533,6 +1550,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <Wallet className="w-5 h-5" />
           <span className="text-[11px] font-bold">Expenses</span>
           {currentNav === "expenses" && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCurrentNav("profile")}
+          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors ${
+            currentNav === "profile" ? "text-[#963314]" : "text-zinc-500 hover:text-zinc-800"
+          }`}
+        >
+          <div
+            className={`w-5 h-5 rounded-full overflow-hidden border transition-all ${
+              currentNav === "profile" ? "border-[#963314] ring-1 ring-[#963314]" : "border-zinc-300"
+            }`}
+          >
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+              alt="Alex Morgan"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="text-[11px] font-bold">Profile</span>
+          {currentNav === "profile" && (
             <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
           )}
         </button>

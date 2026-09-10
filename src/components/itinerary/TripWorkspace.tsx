@@ -21,6 +21,19 @@ import {
   MessageSquare,
   Award,
   CheckCircle2,
+  Navigation,
+  Zap,
+  Footprints,
+  Train,
+  Car,
+  Sparkles,
+  Map,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  MoreVertical,
+  ChevronRight,
+  Moon,
 } from "lucide-react";
 import type { TripItem } from "./ItineraryView";
 import {
@@ -30,6 +43,13 @@ import {
   getChopForTrip,
 } from "../../services/chopStore";
 import { renderModalChopSVG } from "../profile/UserProfileView";
+import {
+  calculateDayRouteStats,
+  optimizeDayActivities,
+  calculateTransitLeg,
+  type TransitLeg,
+  type DayRouteStats,
+} from "../../services/routeOptimizer";
 
 export interface DayActivity {
   id: string;
@@ -397,6 +417,165 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
     selectedDay === "all" ? true : act.day === selectedDay
   );
 
+  // Feature C: Route & Transit Optimizer States
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [showRouteFlow, setShowRouteFlow] = useState(false);
+  const [routeOptimizationToast, setRouteOptimizationToast] = useState<string | null>(null);
+
+  // Determine active target day for route metrics (defaults to Day 1 when viewing "all")
+  const activeTargetDay = selectedDay === "all" ? 1 : selectedDay;
+  const activeDayActivities = useMemo(() => {
+    return activities.filter((a) => a.day === activeTargetDay);
+  }, [activities, activeTargetDay]);
+
+  const activeDayRouteStats = useMemo<DayRouteStats>(() => {
+    return calculateDayRouteStats(activeDayActivities);
+  }, [activeDayActivities]);
+
+  const handleOptimizeRoute = () => {
+    setIsOptimizing(true);
+    setTimeout(() => {
+      const otherActivities = activities.filter((a) => a.day !== activeTargetDay);
+      const reordered = optimizeDayActivities(activeDayActivities);
+
+      setActivities([...otherActivities, ...reordered].sort((a, b) => a.day - b.day));
+      setIsOptimizing(false);
+      setRouteOptimizationToast(
+        activeDayRouteStats.timeSavedMinutes > 0
+          ? `✨ Route optimized! Grouped nearby spots to save ${activeDayRouteStats.timeSavedMinutes} mins of zigzag transit.`
+          : `✨ Day ${activeTargetDay} sequence clustered for minimal transit time!`
+      );
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 65,
+          origin: { y: 0.6 },
+          colors: ["#10b981", "#059669", "#34d399", "#f59e0b", "#6366f1"],
+        });
+      } catch {}
+      setTimeout(() => setRouteOptimizationToast(null), 4000);
+    }, 450);
+  };
+
+  const renderTransitModeIcon = (mode: TransitLeg["mode"]) => {
+    switch (mode) {
+      case "Walk":
+        return <Footprints className="w-3.5 h-3.5 text-emerald-600 shrink-0" />;
+      case "Subway":
+      case "Train":
+        return <Train className="w-3.5 h-3.5 text-blue-600 shrink-0" />;
+      case "Taxi":
+        return <Car className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      case "Ferry":
+        return <Compass className="w-3.5 h-3.5 text-cyan-600 shrink-0" />;
+      default:
+        return <Navigation className="w-3.5 h-3.5 text-zinc-600 shrink-0" />;
+    }
+  };
+
+  // Drag & Drop and Reordering States
+  const [draggedActivityId, setDraggedActivityId] = useState<string | null>(null);
+  const [dragOverActivityId, setDragOverActivityId] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedActivityId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
+
+    // Set drag ghost preview to the ENTIRE activity card
+    const targetElement = e.currentTarget as HTMLElement;
+    const card = targetElement.closest('[data-activity-card="true"]') as HTMLElement | null;
+    if (card && e.dataTransfer.setDragImage) {
+      const rect = card.getBoundingClientRect();
+      const offsetX = Math.max(16, Math.min(e.clientX - rect.left, rect.width - 16));
+      const offsetY = Math.max(16, Math.min(e.clientY - rect.top, rect.height - 16));
+      try {
+        e.dataTransfer.setDragImage(card, offsetX, offsetY);
+      } catch {
+        // Browser fallback
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedActivityId && draggedActivityId !== id && dragOverActivityId !== id) {
+      setDragOverActivityId(id);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, id: string) => {
+    const currentTarget = e.currentTarget as HTMLElement;
+    const relatedTarget = e.relatedTarget as Node | null;
+    if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+      if (dragOverActivityId === id) {
+        setDragOverActivityId(null);
+      }
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedActivityId(null);
+    setDragOverActivityId(null);
+  };
+
+  const handleDropOnActivity = (targetId: string) => {
+    setDragOverActivityId(null);
+    if (!draggedActivityId || draggedActivityId === targetId) {
+      setDraggedActivityId(null);
+      return;
+    }
+
+    setActivities((prev) => {
+      const sourceIndex = prev.findIndex((a) => a.id === draggedActivityId);
+      const targetIndex = prev.findIndex((a) => a.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return prev;
+
+      const targetAct = prev[targetIndex];
+      const updated = [...prev];
+      const [moved] = updated.splice(sourceIndex, 1);
+      const movedWithDay = { ...moved, day: targetAct.day };
+      updated.splice(targetIndex, 0, movedWithDay);
+
+      return updated;
+    });
+
+    setDraggedActivityId(null);
+  };
+
+  const moveActivityWithinDay = (id: string, direction: "up" | "down") => {
+    setActivities((prev) => {
+      const act = prev.find((a) => a.id === id);
+      if (!act) return prev;
+
+      const sameDay = prev.filter((a) => a.day === act.day);
+      const currentIndex = sameDay.findIndex((a) => a.id === id);
+      const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (targetIndex < 0 || targetIndex >= sameDay.length) return prev;
+
+      const targetAct = sameDay[targetIndex];
+      const globalIdx1 = prev.findIndex((a) => a.id === act.id);
+      const globalIdx2 = prev.findIndex((a) => a.id === targetAct.id);
+
+      const next = [...prev];
+      next[globalIdx1] = targetAct;
+      next[globalIdx2] = act;
+      return next;
+    });
+  };
+
+  const handleMoveToDay = (activityId: string, newDayNumber: number) => {
+    setActivities((prev) =>
+      prev.map((act) => (act.id === activityId ? { ...act, day: newDayNumber } : act))
+    );
+    setMenuOpenId(null);
+    setRouteOptimizationToast(`Moved activity to Day ${newDayNumber}`);
+    setTimeout(() => setRouteOptimizationToast(null), 3000);
+  };
+
   // Upvote activity
   const toggleVote = (id: string) => {
     setActivities((prev) =>
@@ -663,6 +842,137 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
             </button>
           </div>
 
+          {/* Feature C: AI Route Efficiency & Sequence Optimizer Bar */}
+          {displayedActivities.length > 1 && (
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-linear-to-r from-zinc-900 via-zinc-900 to-zinc-950 text-white shadow-md border border-zinc-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  {/* Efficiency Badge */}
+                  <div
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 border shadow-2xs ${
+                      activeDayRouteStats.efficiencyScore >= 88
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    <span>{activeDayRouteStats.efficiencyScore}% Route Efficiency</span>
+                  </div>
+
+                  {/* Transit Metrics */}
+                  <div className="text-xs font-medium text-zinc-300 flex items-center gap-2">
+                    <span className="font-bold text-white">
+                      ~{activeDayRouteStats.totalTransitMinutes}m transit
+                    </span>
+                    <span className="text-zinc-500">•</span>
+                    <span>{activeDayRouteStats.totalDistanceKm} km total</span>
+                    <span className="text-zinc-500">•</span>
+                    <span className="text-zinc-400">Day {activeTargetDay}</span>
+                  </div>
+                </div>
+
+                {/* Right Actions: Route Flow Toggle & 1-Click Optimize */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowRouteFlow((prev) => !prev)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-white/10"
+                    title="Toggle visual route flow"
+                  >
+                    <Map className="w-3.5 h-3.5 text-zinc-300" />
+                    <span className="hidden sm:inline">Route Flow</span>
+                    {showRouteFlow ? (
+                      <ChevronUp className="w-3 h-3" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3" />
+                    )}
+                  </button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.96 }}
+                    type="button"
+                    disabled={isOptimizing || activeDayRouteStats.isOptimized}
+                    onClick={handleOptimizeRoute}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                      activeDayRouteStats.isOptimized
+                        ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 cursor-default"
+                        : "bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-emerald-900/40 border border-emerald-400/40"
+                    }`}
+                    title="Reorder activities geographically to minimize travel time"
+                  >
+                    {isOptimizing ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </motion.div>
+                        <span>Optimizing...</span>
+                      </>
+                    ) : activeDayRouteStats.isOptimized ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Route Optimized</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>AI Optimize Route</span>
+                        {activeDayRouteStats.timeSavedMinutes > 0 && (
+                          <span className="text-[10px] bg-black/30 px-1.5 py-0.5 rounded-md text-emerald-200">
+                            Save ~{activeDayRouteStats.timeSavedMinutes}m
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Expandable Route Flow Stepper */}
+              <AnimatePresence>
+                {showRouteFlow && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden pt-2 border-t border-zinc-800"
+                  >
+                    <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                      Geographic Stop Sequence · Day {activeTargetDay}
+                    </div>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                      {activeDayActivities.map((act, idx) => {
+                        const nextLeg = activeDayRouteStats.legs[idx];
+                        return (
+                          <React.Fragment key={act.id}>
+                            <div className="flex items-center gap-2 bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700/80 shrink-0">
+                              <span className="w-5 h-5 rounded-full bg-zinc-700 text-[10px] font-black flex items-center justify-center text-zinc-300">
+                                {idx + 1}
+                              </span>
+                              <div className="max-w-32.5 truncate text-xs font-bold text-zinc-200">
+                                {act.title}
+                              </div>
+                            </div>
+                            {nextLeg && (
+                              <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 px-1 shrink-0">
+                                {renderTransitModeIcon(nextLeg.mode)}
+                                <span>{nextLeg.durationMinutes}m</span>
+                                <span className="text-zinc-600">→</span>
+                              </div>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
           {/* Activities Timeline */}
           {displayedActivities.length === 0 ? (
             <div className="bg-white rounded-3xl border border-dashed border-zinc-300 p-8 text-center">
@@ -686,105 +996,450 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {displayedActivities.map((act) => {
+            (() => {
+              const renderActivityCard = (
+                act: DayActivity,
+                index: number,
+                dayList: DayActivity[]
+              ) => {
                 const categoryStyle = CATEGORY_COLORS[act.category] || CATEGORY_COLORS.Sightseeing;
+                const nextAct = dayList[index + 1];
+                const isFirstInDay = index === 0;
+                const isLastInDay = index === dayList.length - 1;
+                const isDraggingThis = draggedActivityId === act.id;
+                const isTargetDragOver = dragOverActivityId === act.id && draggedActivityId !== act.id;
+                const isMenuOpen = menuOpenId === act.id;
+
                 return (
-                  <motion.div
-                    key={act.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl border border-zinc-200/90 shadow-2xs hover:shadow-md transition-all p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 group"
-                  >
-                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      {/* Day & Time Column */}
-                      <div className="flex flex-col items-start shrink-0 w-20 sm:w-24">
-                        <span className="text-[11px] font-extrabold uppercase text-[#963314] tracking-wider">
-                          Day {act.day}
-                        </span>
-                        <div className="flex items-center gap-1 text-xs font-bold text-zinc-900 mt-0.5">
-                          <Clock className="w-3 h-3 text-zinc-400" />
-                          <span>{act.time}</span>
-                        </div>
-                        <span className="text-[10px] font-medium text-zinc-400 mt-0.5">
-                          {act.period}
-                        </span>
-                      </div>
-
-                      {/* Main Details */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md border text-[11px] font-bold ${categoryStyle.bg} ${categoryStyle.text}`}
+                  <React.Fragment key={act.id}>
+                    <motion.div
+                      layout
+                      layoutId={`act-card-${act.id}`}
+                      data-activity-card="true"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{
+                        opacity: isDraggingThis ? 0.35 : 1,
+                        scale: isDraggingThis ? 0.98 : isTargetDragOver ? 1.02 : 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        layout: { type: "spring", stiffness: 450, damping: 30 },
+                        scale: { duration: 0.16 },
+                        opacity: { duration: 0.16 },
+                      }}
+                      onDragOver={(e) => handleDragOver(e, act.id)}
+                      onDragLeave={(e) => handleDragLeave(e, act.id)}
+                      onDrop={() => handleDropOnActivity(act.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`bg-white rounded-2xl border transition-all duration-150 p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 group relative ${
+                        isTargetDragOver
+                          ? "ring-2 ring-[#963314] ring-offset-2 border-[#963314] bg-orange-50/40 shadow-lg"
+                          : isDraggingThis
+                          ? "border-dashed border-zinc-400 bg-zinc-50 shadow-inner"
+                          : "border-zinc-200/90 shadow-2xs hover:shadow-md"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                        {/* Drag Handle & Up/Down Reorder */}
+                        <div className="flex flex-col items-center justify-start pt-0.5 shrink-0 select-none">
+                          <div
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, act.id)}
+                            onDragEnd={handleDragEnd}
+                            className="p-1 text-zinc-300 hover:text-zinc-700 cursor-grab active:cursor-grabbing rounded-md hover:bg-zinc-100 transition-colors"
+                            title="Drag to reorder activity"
                           >
-                            {categoryStyle.icon}
-                            <span>{act.category}</span>
-                          </span>
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity -space-y-0.5 mt-0.5">
+                            <button
+                              type="button"
+                              disabled={isFirstInDay}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveActivityWithinDay(act.id, "up");
+                              }}
+                              className="p-0.5 text-zinc-400 hover:text-zinc-800 disabled:opacity-20 disabled:hover:text-zinc-400 cursor-pointer active:scale-75 transition-transform"
+                              title="Move up"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isLastInDay}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveActivityWithinDay(act.id, "down");
+                              }}
+                              className="p-0.5 text-zinc-400 hover:text-zinc-800 disabled:opacity-20 disabled:hover:text-zinc-400 cursor-pointer active:scale-75 transition-transform"
+                              title="Move down"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
 
-                          {act.cost && (
-                            <span className="text-[11px] font-bold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded-md">
-                              {act.cost}
+                        {/* Day & Time Column */}
+                        <div className="flex flex-col items-start shrink-0 w-20 sm:w-24">
+                          <span className="text-[11px] font-extrabold uppercase text-[#963314] tracking-wider">
+                            Day {act.day}
+                          </span>
+                          <div className="flex items-center gap-1 text-xs font-bold text-zinc-900 mt-0.5">
+                            <Clock className="w-3 h-3 text-zinc-400" />
+                            <span>{act.time}</span>
+                          </div>
+                          <span className="text-[10px] font-medium text-zinc-400 mt-0.5">
+                            {act.period}
+                          </span>
+                        </div>
+
+                        {/* Main Details */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md border text-[11px] font-bold ${categoryStyle.bg} ${categoryStyle.text}`}
+                            >
+                              {categoryStyle.icon}
+                              <span>{act.category}</span>
                             </span>
+
+                            {act.cost && (
+                              <span className="text-[11px] font-bold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded-md">
+                                {act.cost}
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-sm sm:text-base font-extrabold text-zinc-900 leading-snug">
+                            {act.title}
+                          </h4>
+
+                          <div className="flex items-center gap-1 text-xs font-medium text-zinc-500 mt-1">
+                            <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                            <span className="truncate">{act.location}</span>
+                          </div>
+
+                          {act.notes && (
+                            <p className="text-xs text-zinc-600 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-100 mt-2.5 leading-relaxed font-normal">
+                              💡 {act.notes}
+                            </p>
                           )}
                         </div>
+                      </div>
 
-                        <h4 className="text-sm sm:text-base font-extrabold text-zinc-900 leading-snug">
-                          {act.title}
-                        </h4>
+                      {/* Right Column: Upvote, 3-Dots Menu & Quick Trash */}
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          {/* Group Upvote Button */}
+                          <button
+                            type="button"
+                            onClick={() => toggleVote(act.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 ${
+                              act.hasVoted
+                                ? "bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs"
+                                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200/80 border border-zinc-200/80"
+                            }`}
+                            title="Vote for this activity"
+                          >
+                            <ThumbsUp
+                              className={`w-3.5 h-3.5 ${
+                                act.hasVoted ? "fill-amber-500 text-amber-600" : "text-zinc-500"
+                              }`}
+                            />
+                            <span>{act.votes}</span>
+                          </button>
 
-                        <div className="flex items-center gap-1 text-xs font-medium text-zinc-500 mt-1">
-                          <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
-                          <span className="truncate">{act.location}</span>
+                          {/* 3-Dots Action Menu */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuOpenId(isMenuOpen ? null : act.id);
+                              }}
+                              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                                isMenuOpen
+                                  ? "bg-zinc-200 text-zinc-900 shadow-2xs"
+                                  : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                              }`}
+                              title="Activity options"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            {isMenuOpen && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-30"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMenuOpenId(null);
+                                  }}
+                                />
+                                <div
+                                  className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-2xl shadow-xl border border-zinc-200/90 py-2 z-40 text-left animate-in fade-in zoom-in-95 duration-100"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="px-3 pb-1 text-[10px] font-black uppercase text-zinc-400 tracking-wider">
+                                    Move to Another Day
+                                  </div>
+                                  <div className="max-h-40 overflow-y-auto px-1 space-y-0.5">
+                                    {availableDays
+                                      .filter((d) => d !== act.day)
+                                      .map((d) => (
+                                        <button
+                                          key={d}
+                                          type="button"
+                                          onClick={() => handleMoveToDay(act.id, d)}
+                                          className="w-full px-2.5 py-1.5 text-xs text-zinc-700 hover:bg-amber-50 hover:text-amber-900 rounded-lg font-medium flex items-center justify-between transition-colors text-left cursor-pointer"
+                                        >
+                                          <span className="flex items-center gap-2">
+                                            <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Move to Day {d}</span>
+                                          </span>
+                                          <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                                        </button>
+                                      ))}
+                                  </div>
+
+                                  <div className="h-px bg-zinc-100 my-1.5" />
+
+                                  <div className="px-3 pb-1 text-[10px] font-black uppercase text-zinc-400 tracking-wider">
+                                    Order in Day {act.day}
+                                  </div>
+                                  <div className="px-1 space-y-0.5">
+                                    <button
+                                      type="button"
+                                      disabled={isFirstInDay}
+                                      onClick={() => {
+                                        moveActivityWithinDay(act.id, "up");
+                                        setMenuOpenId(null);
+                                      }}
+                                      className="w-full px-2.5 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg font-medium flex items-center gap-2 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
+                                    >
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                      <span>Move Up</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLastInDay}
+                                      onClick={() => {
+                                        moveActivityWithinDay(act.id, "down");
+                                        setMenuOpenId(null);
+                                      }}
+                                      className="w-full px-2.5 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg font-medium flex items-center gap-2 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
+                                    >
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                      <span>Move Down</span>
+                                    </button>
+                                  </div>
+
+                                  <div className="h-px bg-zinc-100 my-1.5" />
+
+                                  <div className="px-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleDeleteActivity(act.id);
+                                        setMenuOpenId(null);
+                                      }}
+                                      className="w-full px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Delete Activity</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
 
-                        {act.notes && (
-                          <p className="text-xs text-zinc-600 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-100 mt-2.5 leading-relaxed font-normal">
-                            💡 {act.notes}
-                          </p>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteActivity(act.id)}
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1.5 text-zinc-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
+                          title="Remove activity"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    </div>
+                    </motion.div>
 
-                    {/* Right Column: Upvote & Delete */}
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 shrink-0">
-                      {/* Group Upvote Button */}
-                      <button
-                        type="button"
-                        onClick={() => toggleVote(act.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 ${
-                          act.hasVoted
-                            ? "bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs"
-                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200/80 border border-zinc-200/80"
-                        }`}
-                        title="Vote for this activity"
-                      >
-                        <ThumbsUp
-                          className={`w-3.5 h-3.5 ${
-                            act.hasVoted ? "fill-amber-500 text-amber-600" : "text-zinc-500"
-                          }`}
-                        />
-                        <span>{act.votes}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteActivity(act.id)}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1.5 text-zinc-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
-                        title="Remove activity"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </motion.div>
+                    {/* Transit Connector between consecutive activities in the same day */}
+                    {nextAct && (
+                      <div className="relative py-1 flex items-center justify-center">
+                        <div className="absolute inset-x-8 sm:inset-x-16 h-px border-dashed border-t border-zinc-200" />
+                        <div className="relative z-10 px-3 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200/90 text-[11px] font-bold text-zinc-700 flex items-center gap-2 shadow-2xs transition-all">
+                          {(() => {
+                            const leg = calculateTransitLeg(act, nextAct);
+                            return (
+                              <>
+                                <span className="flex items-center gap-1.5 text-zinc-900">
+                                  {renderTransitModeIcon(leg.mode)}
+                                  <span>{leg.durationMinutes}m transit</span>
+                                </span>
+                                <span className="text-zinc-300">•</span>
+                                <span className="text-zinc-500 font-mono text-[10px]">{leg.distanceKm} km</span>
+                                {leg.note && (
+                                  <>
+                                    <span className="text-zinc-300">•</span>
+                                    <span className="text-zinc-500 font-normal italic hidden sm:inline truncate max-w-50">
+                                      {leg.note}
+                                    </span>
+                                  </>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
                 );
-              })}
-            </div>
+              };
+
+              // If viewing "All Days", group activities cleanly under distinct day banners
+              if (selectedDay === "all") {
+                return (
+                  <div className="space-y-6">
+                    {availableDays.map((dayNum, dayIndex) => {
+                      const dayActs = activities.filter((a) => a.day === dayNum);
+                      if (dayActs.length === 0) return null;
+
+                      return (
+                        <div key={`day-group-${dayNum}`} className="space-y-3">
+                          {/* Day Section Header */}
+                          <div className="flex items-center justify-between bg-zinc-100/90 rounded-2xl px-4 py-2.5 border border-zinc-200/80 shadow-2xs">
+                            <div className="flex items-center gap-2.5">
+                              <span className="w-7 h-7 rounded-xl bg-[#963314] text-white flex items-center justify-center text-xs font-black tracking-tight shadow-xs">
+                                D{dayNum}
+                              </span>
+                              <div>
+                                <h3 className="text-sm font-black text-zinc-900 leading-none">
+                                  Day {dayNum} Itinerary
+                                </h3>
+                                <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
+                                  {dayActs.length} {dayActs.length === 1 ? "activity" : "activities"} scheduled
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDay(dayNum)}
+                              className="text-[11px] font-bold text-[#963314] hover:text-[#7a280e] bg-white hover:bg-zinc-50 border border-zinc-200/80 px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs cursor-pointer"
+                            >
+                              <span>Focus Day {dayNum}</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Day's Activities List */}
+                          <div className="space-y-3">
+                            {dayActs.map((act, actIdx) => renderActivityCard(act, actIdx, dayActs))}
+                          </div>
+
+                          {/* Overnight Divider between days */}
+                          {dayIndex < availableDays.length - 1 && (
+                            <div className="py-2.5 flex items-center gap-3">
+                              <div className="flex-1 border-t-2 border-dashed border-zinc-200" />
+                              <div className="px-3.5 py-1.5 rounded-full bg-zinc-900 text-zinc-100 text-[11px] font-bold flex items-center gap-2 shadow-sm">
+                                <Moon className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Overnight • Rest & Recharge in {trip.destination.split(",")[0].trim()}</span>
+                              </div>
+                              <div className="flex-1 border-t-2 border-dashed border-zinc-200" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              // Single Day View
+              return (
+                <div className="space-y-3">
+                  {displayedActivities.map((act, actIdx) =>
+                    renderActivityCard(act, actIdx, displayedActivities)
+                  )}
+                </div>
+              );
+            })()
           )}
         </div>
 
-        {/* Right Sidebar: Companions & Trip Info Card */}
+        {/* Right Sidebar: Route Intelligence, Companions & Trip Info */}
         <div className="w-full lg:w-80 space-y-4 shrink-0">
+          {/* AI Route Intelligence Card */}
+          {activeDayActivities.length > 0 && (
+            <div className="bg-white rounded-3xl border border-zinc-200/90 shadow-2xs p-5 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black text-zinc-900">Route Intelligence</h3>
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                  Day {activeTargetDay}
+                </span>
+              </div>
+
+              {/* Transit Breakdown Pills */}
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="p-2.5 rounded-2xl bg-zinc-50 border border-zinc-100">
+                  <div className="text-base font-black text-zinc-900">
+                    {activeDayRouteStats.totalTransitMinutes}m
+                  </div>
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase">Transit Time</div>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-zinc-50 border border-zinc-100">
+                  <div className="text-base font-black text-zinc-900">
+                    {activeDayRouteStats.totalDistanceKm} km
+                  </div>
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase">Distance</div>
+                </div>
+              </div>
+
+              {/* Stop-by-stop Sequence */}
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                  Stops Breakdown ({activeDayActivities.length})
+                </div>
+                <div className="space-y-1">
+                  {activeDayActivities.map((act, i) => (
+                    <div
+                      key={act.id}
+                      className="flex items-center gap-2 text-xs font-semibold text-zinc-700 py-1 px-2 rounded-lg hover:bg-zinc-50 transition-colors"
+                    >
+                      <span className="w-4 h-4 rounded-full bg-zinc-200 text-zinc-700 text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="truncate flex-1">{act.title}</span>
+                      <span className="text-[10px] text-zinc-400 shrink-0 font-mono">{act.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dynamic Local Transit Pro Tip */}
+              <div className="p-3 rounded-2xl bg-orange-50/70 border border-orange-200/60 text-xs text-[#963314] leading-relaxed">
+                <div className="font-extrabold flex items-center gap-1.5 mb-0.5">
+                  <span>AI Transit Insight</span>
+                </div>
+                {activeDayRouteStats.isOptimized ? (
+                  <p className="text-[11px] text-zinc-700">
+                    Your spots on Day {activeTargetDay} follow a natural geographic arc with minimal transit overhead!
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-zinc-700">
+                    {activeDayRouteStats.suggestedOptimizationReason ||
+                      `Save up to ${activeDayRouteStats.timeSavedMinutes}m transit by clustering nearby spots together.`}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Group Companions Card */}
           <div className="bg-white rounded-3xl border border-zinc-200/90 shadow-2xs p-5">
             <div className="flex items-center justify-between mb-3">
@@ -1154,6 +1809,24 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
         </AnimatePresence>,
         document.body
       )}
+      {/* Route Optimization Toast Alert */}
+      <AnimatePresence>
+        {routeOptimizationToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="fixed top-5 left-1/2 -translate-x-1/2 z-100 max-w-md w-[calc(100%-2rem)] p-3.5 rounded-2xl text-white text-xs flex items-center justify-between shadow-2xl shadow-emerald-950/60 border border-emerald-500/50 bg-zinc-950/95 backdrop-blur-md"
+          >
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="font-semibold text-zinc-100">{routeOptimizationToast}</span>
+            </div>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-2" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

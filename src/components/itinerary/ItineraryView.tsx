@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DateRangePickerModal } from "../dashboard/DateRangePickerModal";
@@ -17,6 +17,8 @@ import {
   Trash2,
   AlertTriangle,
   Compass,
+  Award,
+  CheckCircle2,
 } from "lucide-react";
 import { TripWorkspace } from "./TripWorkspace";
 import { isTripCompleted } from "../../services/chopStore";
@@ -281,6 +283,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
   const [trips, setTrips] = useState<TripItem[]>(() =>
     INITIAL_TRIPS.map((t) => (isTripCompleted(t.id) ? { ...t, status: "Completed" } : t))
   );
+  const [filterTab, setFilterTab] = useState<"active" | "completed" | "all">("active");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTrip, setSelectedTrip] = useState<TripItem | null>(null);
   const [activeTripWorkspace, setActiveTripWorkspace] = useState<TripItem | null>(null);
@@ -290,6 +293,30 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
     message: string;
     isDelete?: boolean;
   } | null>(null);
+
+  // Sync completion states with local storage and global events
+  useEffect(() => {
+    const handleSync = () => {
+      setTrips((prev) =>
+        prev.map((t) => (isTripCompleted(t.id) ? { ...t, status: "Completed" } : t))
+      );
+    };
+    window.addEventListener("itinerai_trips_changed", handleSync);
+    window.addEventListener("itinerai_chops_changed", handleSync);
+    return () => {
+      window.removeEventListener("itinerai_trips_changed", handleSync);
+      window.removeEventListener("itinerai_chops_changed", handleSync);
+    };
+  }, []);
+
+  const activeTrips = useMemo(
+    () => trips.filter((t) => t.status !== "Completed"),
+    [trips]
+  );
+  const completedTrips = useMemo(
+    () => trips.filter((t) => t.status === "Completed"),
+    [trips]
+  );
 
   // New Trip Form States
   const [newDestination, setNewDestination] = useState("");
@@ -464,150 +491,336 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
         </div>
       </div>
 
-      {/* Trips Content */}
-      {viewMode === "grid" ? (
-        /* Grid Layout (Responsive: 1-col on mobile, 2-col on md, 3-col on lg) */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {trips.map((trip) => (
-            <div
-              key={trip.id}
-              onClick={() => setSelectedTrip(trip)}
-              className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-zinc-200/80 transition-all cursor-pointer flex flex-col justify-end p-5 text-white"
+      {/* Filter Tabs Bar: Active / Completed / All */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-2 border-b border-zinc-100">
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-100/90 rounded-2xl border border-zinc-200/80 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setFilterTab("active")}
+            className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              filterTab === "active"
+                ? "bg-white text-zinc-950 shadow-2xs"
+                : "text-zinc-500 hover:text-zinc-800"
+            }`}
+          >
+            <span>Active Escapes</span>
+            <span
+              className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                filterTab === "active"
+                  ? "bg-zinc-900 text-white"
+                  : "bg-zinc-200 text-zinc-600"
+              }`}
             >
-              {/* Background Photo with Zoom on Hover */}
-              <img
-                src={trip.image}
-                alt={trip.destination}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+              {activeTrips.length}
+            </span>
+          </button>
 
-              {/* Gradient Overlay for Legibility */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 transition-opacity" />
+          <button
+            type="button"
+            onClick={() => setFilterTab("completed")}
+            className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              filterTab === "completed"
+                ? "bg-white text-emerald-950 shadow-2xs"
+                : "text-zinc-500 hover:text-zinc-800"
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Completed</span>
+            <span
+              className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                filterTab === "completed"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-emerald-100 text-emerald-800"
+              }`}
+            >
+              {completedTrips.length}
+            </span>
+          </button>
 
-              {/* Top Row: Status Badge & Share Button */}
-              <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                <span
-                  className={`px-3 py-1 rounded-full text-[11px] font-extrabold backdrop-blur-md shadow-xs ${
-                    trip.status === "Completed"
-                      ? "bg-emerald-600/90 text-white border border-emerald-400/40"
-                      : "bg-black/50 border border-white/20 text-white"
-                  }`}
-                >
-                  {trip.status}
-                </span>
-
-                <button
-                  type="button"
-                  title="Copy shareable invite link"
-                  onClick={(e) => copyShareLink(trip, e)}
-                  className="w-8 h-8 rounded-full bg-black/50 hover:bg-white hover:text-zinc-900 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Bottom Content: Destination, Dates, and Member Avatars */}
-              <div className="relative z-10 flex items-end justify-between gap-3">
-                <div className="flex-1 pr-2">
-                  <h3 className="text-xl sm:text-2xl font-black text-white leading-snug tracking-tight drop-shadow-sm">
-                    {trip.destination}
-                  </h3>
-                  <div className="text-xs sm:text-sm font-semibold text-zinc-200/90 flex items-center gap-1.5 mt-0.5">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>{trip.dates}</span>
-                  </div>
-                </div>
-
-                {/* Overlapping Avatar Stack */}
-                <div className="flex items-center -space-x-2 shrink-0">
-                  {trip.members.slice(0, 3).map((member) => (
-                    <img
-                      key={member.id}
-                      src={member.avatar}
-                      alt={member.name}
-                      title={member.name}
-                      className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-xs"
-                    />
-                  ))}
-                  {trip.totalMembersCount > trip.members.slice(0, 3).length && (
-                    <div className="w-8 h-8 rounded-full border-2 border-white bg-zinc-100 text-zinc-800 text-[11px] font-black flex items-center justify-center shadow-xs">
-                      +{trip.totalMembersCount - trip.members.slice(0, 3).length}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+          <button
+            type="button"
+            onClick={() => setFilterTab("all")}
+            className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              filterTab === "all"
+                ? "bg-white text-zinc-950 shadow-2xs"
+                : "text-zinc-500 hover:text-zinc-800"
+            }`}
+          >
+            <span>All</span>
+            <span
+              className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                filterTab === "all"
+                  ? "bg-zinc-900 text-white"
+                  : "bg-zinc-200 text-zinc-600"
+              }`}
+            >
+              {trips.length}
+            </span>
+          </button>
         </div>
-      ) : (
-        /* Line / List Layout */
-        <div className="space-y-4">
-          {trips.map((trip) => (
-            <div
-              key={trip.id}
-              onClick={() => setSelectedTrip(trip)}
-              className="group bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 bg-zinc-100">
-                  <img
-                    src={trip.image}
-                    alt={trip.destination}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+
+        {filterTab === "completed" && onNavigateToProfile && (
+          <button
+            type="button"
+            onClick={onNavigateToProfile}
+            className="text-xs font-bold text-[#963314] hover:text-[#78280f] flex items-center gap-1.5 cursor-pointer transition-colors bg-orange-50/80 px-3 py-1.5 rounded-xl border border-orange-200/70"
+          >
+            <Award className="w-3.5 h-3.5 text-[#963314]" />
+            <span>Passport Booklet</span>
+            <ChevronRight className="w-3 h-3 text-[#963314]" />
+          </button>
+        )}
+      </div>
+
+      {/* Trips Content */}
+      {(() => {
+        // Reusable renderers for grid & line layouts
+        const renderGrid = (items: TripItem[]) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {items.map((trip) => (
+              <div
+                key={trip.id}
+                onClick={() => setSelectedTrip(trip)}
+                className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-zinc-200/80 transition-all cursor-pointer flex flex-col justify-end p-5 text-white"
+              >
+                {/* Background Photo with Zoom on Hover */}
+                <img
+                  src={trip.image}
+                  alt={trip.destination}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+
+                {/* Gradient Overlay for Legibility */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 transition-opacity" />
+
+                {/* Top Row: Status Badge & Share Button */}
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+                  <span
+                    className={`px-3 py-1 rounded-full text-[11px] font-extrabold backdrop-blur-md shadow-xs flex items-center gap-1 ${
+                      trip.status === "Completed"
+                        ? "bg-emerald-600/90 text-white border border-emerald-400/40"
+                        : "bg-black/50 border border-white/20 text-white"
+                    }`}
+                  >
+                    {trip.status === "Completed" && <Check className="w-3 h-3 text-emerald-200" />}
+                    {trip.status}
+                  </span>
+
+                  <button
+                    type="button"
+                    title="Copy shareable invite link"
+                    onClick={(e) => copyShareLink(trip, e)}
+                    className="w-8 h-8 rounded-full bg-black/50 hover:bg-white hover:text-zinc-900 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#963314]/10 text-[#963314]">
-                      {trip.status}
-                    </span>
-                    {trip.budget && (
-                      <span className="text-[11px] text-zinc-400 font-medium">
-                        {trip.budget}
-                      </span>
+
+                {/* Bottom Content: Destination, Dates, and Member Avatars */}
+                <div className="relative z-10 flex items-end justify-between gap-3">
+                  <div className="flex-1 pr-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-white leading-snug tracking-tight drop-shadow-sm">
+                      {trip.destination}
+                    </h3>
+                    <div className="text-xs sm:text-sm font-semibold text-zinc-200/90 flex items-center gap-1.5 mt-0.5">
+                      <Calendar className="w-3.5 h-3.5 text-zinc-300" />
+                      <span>{trip.dates}</span>
+                    </div>
+                  </div>
+
+                  {/* Overlapping Avatar Stack */}
+                  <div className="flex items-center -space-x-2 shrink-0">
+                    {trip.members.slice(0, 3).map((member) => (
+                      <img
+                        key={member.id}
+                        src={member.avatar}
+                        alt={member.name}
+                        title={member.name}
+                        className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-xs"
+                      />
+                    ))}
+                    {trip.totalMembersCount > trip.members.slice(0, 3).length && (
+                      <div className="w-8 h-8 rounded-full border-2 border-white bg-zinc-100 text-zinc-800 text-[11px] font-black flex items-center justify-center shadow-xs">
+                        +{trip.totalMembersCount - trip.members.slice(0, 3).length}
+                      </div>
                     )}
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-zinc-950 leading-tight">
-                    {trip.destination}
-                  </h3>
-                  <div className="text-xs text-zinc-500 font-medium flex items-center gap-1.5 mt-1">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{trip.dates}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+        const renderLine = (items: TripItem[]) => (
+          <div className="space-y-4">
+            {items.map((trip) => (
+              <div
+                key={trip.id}
+                onClick={() => setSelectedTrip(trip)}
+                className="group bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-zinc-200/90 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 bg-zinc-100">
+                    <img
+                      src={trip.image}
+                      alt={trip.destination}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold ${
+                          trip.status === "Completed"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-[#963314]/10 text-[#963314]"
+                        }`}
+                      >
+                        {trip.status}
+                      </span>
+                      {trip.budget && (
+                        <span className="text-[11px] text-zinc-400 font-medium">
+                          {trip.budget}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-950 leading-tight">
+                      {trip.destination}
+                    </h3>
+                    <div className="text-xs text-zinc-500 font-medium flex items-center gap-1.5 mt-1">
+                      <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>{trip.dates}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-zinc-100">
+                  {/* Avatar Stack */}
+                  <div className="flex items-center -space-x-2">
+                    {trip.members.slice(0, 3).map((member) => (
+                      <img
+                        key={member.id}
+                        src={member.avatar}
+                        alt={member.name}
+                        className="w-7 h-7 rounded-full border-2 border-white object-cover"
+                      />
+                    ))}
+                    {trip.totalMembersCount > 3 && (
+                      <div className="w-7 h-7 rounded-full border-2 border-white bg-zinc-200 text-zinc-700 text-[10px] font-bold flex items-center justify-center">
+                        +{trip.totalMembersCount - 3}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => copyShareLink(trip, e)}
+                    className="px-3.5 py-1.5 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-xs font-bold text-zinc-700 flex items-center gap-1.5 transition-colors"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-[#f15a24]" />
+                    <span>Share Invite</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+        // CASE 1: ACTIVE ESCAPES VIEW
+        if (filterTab === "active") {
+          if (activeTrips.length === 0) {
+            return (
+              <div className="text-center py-16 px-4 rounded-3xl bg-zinc-50 border border-dashed border-zinc-200">
+                <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#f15a24] flex items-center justify-center mx-auto mb-3">
+                  <Compass className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-zinc-900">No active escapes</h3>
+                <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1">
+                  Plan your next adventure by creating a new trip or inviting friends to collaborate.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="mt-4 px-4 py-2 rounded-xl bg-[#f15a24] hover:bg-[#e04812] text-white text-xs font-bold shadow-xs cursor-pointer transition-all"
+                >
+                  Create a Trip
+                </button>
+              </div>
+            );
+          }
+          return viewMode === "grid" ? renderGrid(activeTrips) : renderLine(activeTrips);
+        }
+
+        // CASE 2: COMPLETED ESCAPES VIEW (Dedicated tab)
+        if (filterTab === "completed") {
+          if (completedTrips.length === 0) {
+            return (
+              <div className="text-center py-16 px-4 rounded-3xl bg-zinc-50 border border-dashed border-zinc-200">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto mb-3">
+                  <Award className="w-6 h-6 text-[#963314]" />
+                </div>
+                <h3 className="text-base font-bold text-zinc-900">No completed trips yet</h3>
+                <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1 leading-relaxed">
+                  Once your trip dates pass, click &ldquo;Complete Trip&rdquo; in your itinerary workspace to archive your journeys here and collect authentic passport chops!
+                </p>
+              </div>
+            );
+          }
+          return (
+            <div className="space-y-5">
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-950">
+                      {completedTrips.length} Completed {completedTrips.length === 1 ? "Escape" : "Escapes"} Archived
+                    </h4>
+                    <p className="text-[11px] text-emerald-800/80">
+                      All travel chops are stamped in your passport collection. Click any card to view memories or reopen.
+                    </p>
                   </div>
                 </div>
               </div>
+              {viewMode === "grid" ? renderGrid(completedTrips) : renderLine(completedTrips)}
+            </div>
+          );
+        }
 
-              <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-zinc-100">
-                {/* Avatar Stack */}
-                <div className="flex items-center -space-x-2">
-                  {trip.members.slice(0, 3).map((member) => (
-                    <img
-                      key={member.id}
-                      src={member.avatar}
-                      alt={member.name}
-                      className="w-7 h-7 rounded-full border-2 border-white object-cover"
-                    />
-                  ))}
-                  {trip.totalMembersCount > 3 && (
-                    <div className="w-7 h-7 rounded-full border-2 border-white bg-zinc-200 text-zinc-700 text-[10px] font-bold flex items-center justify-center">
-                      +{trip.totalMembersCount - 3}
-                    </div>
-                  )}
+        // CASE 3: ALL ESCAPES (Active on top, Completed stored below!)
+        if (activeTrips.length > 0 && completedTrips.length > 0) {
+          return (
+            <div className="space-y-10">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                    Active Escapes ({activeTrips.length})
+                  </h3>
                 </div>
+                {viewMode === "grid" ? renderGrid(activeTrips) : renderLine(activeTrips)}
+              </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => copyShareLink(trip, e)}
-                  className="px-3.5 py-1.5 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-xs font-bold text-zinc-700 flex items-center gap-1.5 transition-colors"
-                >
-                  <Share2 className="w-3.5 h-3.5 text-[#f15a24]" />
-                  <span>Share Invite</span>
-                </button>
+              <div className="pt-6 border-t border-zinc-200/80">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-emerald-800">
+                      Completed Escapes ({completedTrips.length})
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-bold text-zinc-400">
+                    Stored in Passport Booklet
+                  </span>
+                </div>
+                {viewMode === "grid" ? renderGrid(completedTrips) : renderLine(completedTrips)}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        }
+
+        return viewMode === "grid" ? renderGrid(trips) : renderLine(trips);
+      })()}
 
       {/* Floating Action Button (FAB) on Mobile / Universal */}
       <button
@@ -941,7 +1154,12 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
                       }}
                       className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
                     >
-                      {selectedTrip.status === "Confirmed" ? (
+                      {selectedTrip.status === "Completed" ? (
+                        <>
+                          <Award className="w-4 h-4 text-emerald-400" />
+                          <span>View Completed Trip &amp; Chop</span>
+                        </>
+                      ) : selectedTrip.status === "Confirmed" ? (
                         <>
                           <Calendar className="w-4 h-4 text-emerald-400" />
                           <span>Open Itinerary</span>

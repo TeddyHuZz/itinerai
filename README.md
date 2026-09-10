@@ -34,7 +34,7 @@
 | Chen Jun Voonn | Full-Stack Developer |
 
 
-> 📹 **Video Presentation:** \[Unlisted YouTube Link\]
+> 📹 **Video Presentation:** [ItinerAI Demo Pitch](https://youtu.be/O1C6u-I6iaM)
 >
 > 📑 **Presentation Slides:** [ItinerAI — AI-Powered Group Travel Planner](https://gamma.app/docs/ItinerAI-AI-Powered-Group-Travel-Planner-vkeavomhz97jjtp)
 

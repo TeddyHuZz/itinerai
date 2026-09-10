@@ -81,91 +81,109 @@ export const LegalModal: React.FC<LegalModalProps> = ({
       {/* ========================================================================= */}
       {/* TOP STICKY APP BAR                                                        */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-20 w-full bg-white/90 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={onClose}
-            className="group p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors flex items-center gap-1.5 text-xs sm:text-sm font-semibold cursor-pointer"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 duration-200" />
-            <span className="hidden sm:inline">Back to Itinerai</span>
-          </motion.button>
+      <header className="sticky top-0 z-20 w-full bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-3.5 sm:px-8 py-2.5 sm:py-3.5 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4 w-full">
+          {/* Top Row on Mobile: Back, Brand, Close */}
+          <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={onClose}
+                className="group p-1.5 sm:p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors flex items-center gap-1.5 text-xs sm:text-sm font-semibold cursor-pointer"
+                aria-label="Back"
+              >
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 duration-200" />
+                <span className="hidden sm:inline">Back to Itinerai</span>
+              </motion.button>
 
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
+              <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
 
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-sm sm:text-base tracking-tight text-zinc-950">
-              Itinerai
-            </span>
-            <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
-              Legal Center
-            </span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-extrabold text-sm sm:text-base tracking-tight text-zinc-950">
+                  Itinerai
+                </span>
+                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
+                  Legal
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile-only Close Button */}
+            <div className="flex items-center sm:hidden">
+              <motion.button
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </motion.button>
+            </div>
           </div>
-        </div>
 
-        {/* Tab Switcher with Animated Sliding Pill */}
-        <div className="relative flex items-center p-1 rounded-xl bg-zinc-100 border border-zinc-200/80">
-          <button
-            onClick={() => setActiveTab("terms")}
-            className={`relative z-10 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-              activeTab === "terms"
-                ? "text-zinc-950"
-                : "text-zinc-500 hover:text-zinc-900"
-            }`}
-          >
-            {activeTab === "terms" && (
-              <motion.div
-                layoutId="legal-tab-pill"
-                transition={{ type: "spring", stiffness: 450, damping: 35 }}
-                className="absolute inset-0 bg-white rounded-lg shadow-xs"
-              />
-            )}
-            <span className="relative z-10">Terms of Service</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("privacy")}
-            className={`relative z-10 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-              activeTab === "privacy"
-                ? "text-zinc-950"
-                : "text-zinc-500 hover:text-zinc-900"
-            }`}
-          >
-            {activeTab === "privacy" && (
-              <motion.div
-                layoutId="legal-tab-pill"
-                transition={{ type: "spring", stiffness: 450, damping: 35 }}
-                className="absolute inset-0 bg-white rounded-lg shadow-xs"
-              />
-            )}
-            <span className="relative z-10">Privacy Policy</span>
-          </button>
-        </div>
+          {/* Tab Switcher with Animated Sliding Pill */}
+          <div className="relative flex items-center p-1 rounded-xl bg-zinc-100 border border-zinc-200/80 w-full sm:w-auto">
+            <button
+              onClick={() => setActiveTab("terms")}
+              className={`relative z-10 flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-center ${
+                activeTab === "terms"
+                  ? "text-zinc-950"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              {activeTab === "terms" && (
+                <motion.div
+                  layoutId="legal-tab-pill"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                  className="absolute inset-0 bg-white rounded-lg shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Terms of Service</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("privacy")}
+              className={`relative z-10 flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer text-center ${
+                activeTab === "privacy"
+                  ? "text-zinc-950"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              {activeTab === "privacy" && (
+                <motion.div
+                  layoutId="legal-tab-pill"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                  className="absolute inset-0 bg-white rounded-lg shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Privacy Policy</span>
+            </button>
+          </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handlePrint}
-            title="Print document"
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
-          </motion.button>
+          {/* Action buttons (Desktop & Tablet only) */}
+          <div className="hidden sm:flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePrint}
+              title="Print document"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print</span>
+            </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </motion.button>
+          </div>
         </div>
       </header>
 

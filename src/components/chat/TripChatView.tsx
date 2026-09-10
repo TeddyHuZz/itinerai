@@ -17,6 +17,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { webllmService, SELECTED_MODEL } from "../../services/webllmService";
+import { fetchOnlinePlaceImage } from "../../services/imageSearchService";
 import type { TripItem } from "../itinerary/ItineraryView";
 
 export interface ChatMessage {
@@ -59,18 +60,69 @@ export function getGoogleMapsUrl(spotTitle: string, destination?: string): strin
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
-export function getSpotImage(spotTitle: string, destination?: string, fallbackImage?: string): string {
+export function getSpotImage(
+  spotTitle: string,
+  destination?: string,
+  fallbackImage?: string,
+  category?: string,
+  index = 0
+): string {
   const t = spotTitle.toLowerCase();
   const d = (destination || "").toLowerCase();
 
   // 1. Match spot-specific keywords from spotTitle FIRST!
 
+  // Specific restaurant & bar keywords
+  // Zermatt dining
+  if (t.includes("vrony")) {
+    return "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?w=400&auto=format&fit=crop&q=80"; // Swiss alpine chalet
+  }
+  if (t.includes("whymper") || t.includes("fondue")) {
+    return "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&auto=format&fit=crop&q=80"; // Authentic hot cheese fondue
+  }
+  if (t.includes("findlerhof")) {
+    return "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&auto=format&fit=crop&q=80"; // High alpine sun terrace
+  }
+
+  // Bali dining
+  if (t.includes("locavore") || t.includes("babi guling") || t.includes("warung") || t.includes("gajah mada")) {
+    return "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("nuri") || t.includes("ribs") || t.includes("grill") || t.includes("bbq")) {
+    return "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("lucciola") || t.includes("jimbaran") || t.includes("beach house") || t.includes("seafood")) {
+    return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // Amalfi dining
+  if (t.includes("adolfo")) {
+    return "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("sponda")) {
+    return "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("cumpa") || t.includes("rivoire") || t.includes("moreno")) {
+    return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=80";
+  }
+
+  // Kyoto dining
+  if (t.includes("pontocho") || t.includes("karyo") || t.includes("kaiseki")) {
+    return "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("sen-no-kaze") || t.includes("ramen")) {
+    return "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&auto=format&fit=crop&q=80";
+  }
+  if (t.includes("nishiki") || t.includes("street food")) {
+    return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop&q=80";
+  }
+
   // Zermatt & Swiss Alps
   if (t.includes("gornergrat") || t.includes("railway") || t.includes("train")) {
     return "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop&q=80";
   }
-  if (t.includes("fondue") || t.includes("evening") || t.includes("dinner") || t.includes("cheese")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+  if (t.includes("fondue") || t.includes("cheese")) {
+    return "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&auto=format&fit=crop&q=80";
   }
   if (t.includes("matterhorn") || t.includes("glacier") || t.includes("paradise")) {
     return "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&auto=format&fit=crop&q=80";
@@ -108,6 +160,9 @@ export function getSpotImage(spotTitle: string, destination?: string, fallbackIm
   }
 
   // Bali
+  if (t.includes("rock bar") || t.includes("potato head") || t.includes("single fin")) {
+    return "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400&auto=format&fit=crop&q=80";
+  }
   if (t.includes("ubud") || t.includes("rice terrace") || t.includes("tegallalang")) {
     return "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400&auto=format&fit=crop&q=80";
   }
@@ -118,18 +173,34 @@ export function getSpotImage(spotTitle: string, destination?: string, fallbackIm
     return "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&auto=format&fit=crop&q=80";
   }
 
-  // General Categories
-  if (t.includes("food") || t.includes("dining") || t.includes("restaurant") || t.includes("cafe") || t.includes("tasting")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+  // 2. Category Match: If category is Food, provide distinct dining photos
+  if (
+    category === "Food" ||
+    t.includes("food") ||
+    t.includes("dining") ||
+    t.includes("restaurant") ||
+    t.includes("cafe") ||
+    t.includes("bistro") ||
+    t.includes("tasting")
+  ) {
+    const foodPhotos = [
+      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&auto=format&fit=crop&q=80",
+    ];
+    return foodPhotos[index % foodPhotos.length];
   }
-  if (t.includes("culture") || t.includes("museum") || t.includes("castle") || t.includes("palace") || t.includes("historic")) {
+
+  if (category === "Culture" || t.includes("culture") || t.includes("museum") || t.includes("castle") || t.includes("palace") || t.includes("historic")) {
     return "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&auto=format&fit=crop&q=80";
   }
-  if (t.includes("hike") || t.includes("mountain") || t.includes("nature") || t.includes("viewpoint") || t.includes("trail")) {
+  if (category === "Adventure" || t.includes("hike") || t.includes("mountain") || t.includes("nature") || t.includes("viewpoint") || t.includes("trail")) {
     return "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?w=400&auto=format&fit=crop&q=80";
   }
 
-  // 2. Only if no title keyword matched, use destination defaults:
+  // 3. Destination Defaults (General landmarks)
   if (d.includes("zermatt") || d.includes("swiss")) {
     return "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&auto=format&fit=crop&q=80";
   }
@@ -148,34 +219,53 @@ export function getSpotImage(spotTitle: string, destination?: string, fallbackIm
 
 const renderFormattedMessage = (text: string, isUser = false, destination?: string) => {
   if (!text) return null;
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, idx) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      const titleText = part.slice(2, -2).trim();
-      return (
-        <span key={idx} className="inline-flex items-center gap-1 flex-wrap align-baseline">
-          <strong
-            className={`font-bold ${isUser ? "text-white" : "text-zinc-950"}`}
-          >
-            {titleText}
-          </strong>
-          {!isUser && (
-            <a
-              href={getGoogleMapsUrl(titleText, destination)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[10px] font-semibold text-[#963314] bg-[#963314]/8 hover:bg-[#963314]/15 rounded-md transition-colors"
-              title={`View ${titleText} on Google Maps`}
-              onClick={(e) => e.stopPropagation()}
+  const lines = text.split("\n");
+
+  return lines.map((line, lineIdx) => {
+    let hasLinkedMapOnThisLine = false;
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+
+    const renderedLine = parts.map((part, idx) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        const titleText = part.slice(2, -2).trim();
+        const isGenericTerm = /^(fine dining|casual dining|seafood|street food|dining|food|lunch|dinner|breakfast|price|cost|atmosphere|cuisine|address|hours|tip|option|note|recommendation|highlights?|features?)/i.test(titleText);
+        const shouldLinkMap = !isUser && !hasLinkedMapOnThisLine && !isGenericTerm;
+        if (shouldLinkMap) {
+          hasLinkedMapOnThisLine = true;
+        }
+
+        return (
+          <span key={idx} className="inline-flex items-center gap-1 flex-wrap align-baseline">
+            <strong
+              className={`font-bold ${isUser ? "text-white" : "text-zinc-950"}`}
             >
-              <MapPin className="w-2.5 h-2.5" />
-              <span>Map ↗</span>
-            </a>
-          )}
-        </span>
-      );
-    }
-    return <React.Fragment key={idx}>{part}</React.Fragment>;
+              {titleText}
+            </strong>
+            {shouldLinkMap && (
+              <a
+                href={getGoogleMapsUrl(titleText, destination)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[10px] font-semibold text-[#963314] bg-[#963314]/8 hover:bg-[#963314]/15 rounded-md transition-colors"
+                title={`View ${titleText} on Google Maps`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MapPin className="w-2.5 h-2.5" />
+                <span>Map ↗</span>
+              </a>
+            )}
+          </span>
+        );
+      }
+      return <React.Fragment key={idx}>{part}</React.Fragment>;
+    });
+
+    return (
+      <React.Fragment key={lineIdx}>
+        {renderedLine}
+        {lineIdx < lines.length - 1 && <br />}
+      </React.Fragment>
+    );
   });
 };
 
@@ -540,27 +630,58 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
           }
         );
 
+        let pollOptions: {
+          id: string;
+          title: string;
+          category: string;
+          cost?: string;
+          image: string;
+          mapUrl?: string;
+          votes: number;
+          voters: string[];
+        }[] = [];
+
+        if (result.suggestedSpots && result.suggestedSpots.length > 0) {
+          pollOptions = await Promise.all(
+            result.suggestedSpots.map(async (spot, i) => {
+              const resolvedImage =
+                spot.image ||
+                (await fetchOnlinePlaceImage(
+                  spot.title,
+                  currentTrip.destination,
+                  spot.category,
+                  i,
+                  currentTrip.image
+                ));
+
+              return {
+                id: `opt-${Date.now()}-${i}`,
+                title: spot.title,
+                category: spot.category,
+                cost: spot.cost,
+                image: resolvedImage,
+                mapUrl: spot.mapUrl || getGoogleMapsUrl(spot.title, currentTrip.destination),
+                votes: 0,
+                voters: [],
+              };
+            })
+          );
+        }
+
         const aiMsg: ChatMessage = {
           id: `msg-ai-${Date.now()}`,
           sender: "ai",
-          authorName: "ItinerAI (Llama-3.2 WebGPU)",
+          authorName: result.isLlamaWebGPU
+            ? "ItinerAI (Llama-3.2 WebGPU)"
+            : "ItinerAI (Smart Assistant)",
           avatar: "ai",
           text: result.text,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          poll: result.suggestedSpots && result.suggestedSpots.length > 0 ? {
+          poll: pollOptions.length > 0 ? {
             id: `poll-${Date.now()}`,
             question: `Group Vote: Suggested spots for ${currentTrip.destination}`,
             targetDay: 2,
-            options: result.suggestedSpots.map((spot, i) => ({
-              id: `opt-${Date.now()}-${i}`,
-              title: spot.title,
-              category: spot.category,
-              cost: spot.cost,
-              image: spot.image || getSpotImage(spot.title, currentTrip.destination, currentTrip.image),
-              mapUrl: spot.mapUrl || getGoogleMapsUrl(spot.title, currentTrip.destination),
-              votes: 0,
-              voters: [],
-            })),
+            options: pollOptions,
           } : undefined,
         };
 

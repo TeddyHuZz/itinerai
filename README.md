@@ -26,14 +26,13 @@
 
 ## 👥 Team
 
-**ItinerAI** by **Team \[Your Team Name\]**
+**ItinerAI** by **Team Axiom**
 
 | Member | Role |
 |--------|------|
-| \[Member 1\] | \[Role\] |
-| \[Member 2\] | \[Role\] |
-| \[Member 3\] | \[Role\] |
-| \[Member 4\] | \[Role\] |
+| Kee Wen Fei | Full-Stack Developer |
+| Chen Jun Voonn | Full-Stack Developer |
+
 
 > 📹 **Video Presentation:** \[Unlisted YouTube Link\]
 >

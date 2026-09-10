@@ -1080,33 +1080,35 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
         {/* ======================================================================= */}
         {/* 1. TOP HEADER & TRIP SWITCHER BAR                                        */}
         {/* ======================================================================= */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200/80">
+        <div className="flex items-center justify-between gap-2.5 sm:gap-4 pb-3 sm:pb-4 border-b border-zinc-200/80">
           {/* Trip Selector with Custom Dropdown Popover */}
-          <div className="flex items-center gap-3">
-            <div className="relative" ref={tripDropdownRef}>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
+            <div className="relative min-w-0" ref={tripDropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsTripMenuOpen((v) => !v)}
-                className="flex items-center gap-3 px-3.5 py-2 rounded-2xl bg-white hover:bg-zinc-50 border border-zinc-200/80 shadow-xs hover:border-zinc-300 transition-all cursor-pointer text-left group"
+                className="flex items-center gap-2 sm:gap-3 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-white hover:bg-zinc-50 border border-zinc-200/80 shadow-xs hover:border-zinc-300 transition-all cursor-pointer text-left group max-w-full"
               >
                 <img
                   src={currentTrip?.image}
                   alt={currentTrip?.destination}
-                  className="w-8 h-8 rounded-xl object-cover ring-1 ring-zinc-200"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl object-cover ring-1 ring-zinc-200 shrink-0"
                 />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Trip Budget</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-orange-100 text-[#963314]">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1 sm:gap-1.5">
+                    <span className="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">
+                      Budget
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded bg-orange-100 text-[#963314] whitespace-nowrap">
                       {currentTrip?.dates}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="text-sm sm:text-base font-extrabold text-zinc-900 leading-none">
+                  <div className="flex items-center gap-1 sm:gap-1.5">
+                    <h1 className="text-xs sm:text-base font-extrabold text-zinc-900 leading-none truncate max-w-24 sm:max-w-none">
                       {currentTrip?.destination}
                     </h1>
                     <ChevronDown
-                      className={`w-4 h-4 text-zinc-400 group-hover:text-zinc-700 transition-transform ${
+                      className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 group-hover:text-zinc-700 transition-transform shrink-0 ${
                         isTripMenuOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -1166,7 +1168,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenItinerary}
-                className="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-zinc-200/80 hover:bg-zinc-100/70 text-xs font-bold text-zinc-600 transition-all cursor-pointer"
+                className="hidden md:inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-zinc-200/80 hover:bg-zinc-100/70 text-xs font-bold text-zinc-600 transition-all cursor-pointer shadow-2xs"
                 title="Open trip timeline and itinerary"
               >
                 <CalendarDays className="w-3.5 h-3.5 text-zinc-500" />
@@ -1175,15 +1177,16 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
             )}
           </div>
 
-          {/* Primary Action Button on Desktop */}
-          <div className="flex items-center gap-2.5">
+          {/* Primary Action Button */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setIsScannerOpen(true)}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-[#963314] hover:bg-[#7d2b10] text-white text-xs sm:text-sm font-extrabold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              className="px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#963314] hover:bg-[#7d2b10] text-white text-xs sm:text-sm font-extrabold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 shrink-0"
             >
-              <Plus className="w-4 h-4 stroke-3" />
-              <span>Scan or Add Receipt</span>
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+              <span className="hidden sm:inline">Scan or Add Receipt</span>
+              <span className="sm:hidden">Scan Receipt</span>
             </button>
           </div>
         </div>
@@ -1197,54 +1200,57 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
           {/* =================================================================== */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-5">
             {/* Top Metric Cards (Total Spent & You Owe) */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-4 sm:p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-2xs">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+              <div className="p-3.5 sm:p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-zinc-500 mb-1">
-                  <span className="text-xs sm:text-sm font-semibold">Total Spent</span>
-                  <Receipt className="w-4 h-4 text-zinc-400" />
+                  <span className="text-xs sm:text-sm font-semibold truncate">Total Spent</span>
+                  <Receipt className="w-4 h-4 text-zinc-400 shrink-0 ml-1" />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#963314] tracking-tight">
-                  RM {totalSpent.toLocaleString()}
-                </h2>
-                <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-                  Across {expenses.length} shared receipts
-                </p>
+                <div>
+                  <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-[#963314] tracking-tight whitespace-nowrap">
+                    RM {totalSpent.toLocaleString()}
+                  </h2>
+                  <p className="text-[10px] sm:text-[11px] text-zinc-400 font-medium mt-0.5 truncate">
+                    Across {expenses.length} shared receipts
+                  </p>
+                </div>
               </div>
 
               <div
-                className={`p-4 sm:p-5 rounded-3xl border shadow-2xs transition-colors ${
+                className={`p-3.5 sm:p-5 rounded-3xl border shadow-2xs transition-colors flex flex-col justify-between ${
                   totalYouOwe > 0
                     ? "bg-orange-50/50 border-orange-200/80 text-[#963314]"
                     : "bg-white border-zinc-200/80 text-zinc-900"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs sm:text-sm font-semibold">
+                <div className="flex items-center justify-between mb-1 gap-1">
+                  <span className="text-xs sm:text-sm font-semibold truncate">
                     {primaryCreditor ? `You owe ${primaryCreditor.name.split(" ")[0]}` : "Your Balance"}
                   </span>
-                  <CreditCard className={`w-4 h-4 ${totalYouOwe > 0 ? "text-[#963314]" : "text-emerald-500"}`} />
-                </div>
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-                    RM {totalYouOwe}
-                  </h2>
-                  {primaryCreditor && primaryCreditor.amount > 0 && (
+                  {primaryCreditor && primaryCreditor.amount > 0 ? (
                     <button
                       type="button"
                       onClick={handleSettleAllWithPrimary}
-                      className="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-[#963314] text-white hover:bg-[#7d2b10] transition-colors cursor-pointer shrink-0 shadow-2xs"
+                      className="text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-[#963314] text-white hover:bg-[#7d2b10] transition-colors cursor-pointer shrink-0 shadow-2xs"
                     >
                       Settle
                     </button>
+                  ) : (
+                    <CreditCard className={`w-4 h-4 shrink-0 ${totalYouOwe > 0 ? "text-[#963314]" : "text-emerald-500"}`} />
                   )}
                 </div>
-                <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
-                  {totalYouOwe > 0
-                    ? primaryCreditor
-                      ? `RM ${primaryCreditor.amount} pending to ${primaryCreditor.name.split(" ")[0]}`
-                      : "Pending reimbursement"
-                    : "All settled up!"}
-                </p>
+                <div>
+                  <h2 className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight whitespace-nowrap">
+                    RM {totalYouOwe}
+                  </h2>
+                  <p className="text-[10px] sm:text-[11px] text-zinc-500 font-medium mt-0.5 truncate">
+                    {totalYouOwe > 0
+                      ? primaryCreditor
+                        ? `RM ${primaryCreditor.amount} pending to ${primaryCreditor.name.split(" ")[0]}`
+                        : "Pending reimbursement"
+                      : "All settled up!"}
+                  </p>
+                </div>
               </div>
             </div>
 

@@ -545,7 +545,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               className="text-left cursor-pointer group"
             >
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#963314] select-none leading-none group-hover:opacity-90 transition-opacity">
-                Itenerai
+                Itinerai
               </h1>
               <span className="hidden sm:block text-[11px] text-zinc-500 font-medium mt-0.5">
                 Trip Hub

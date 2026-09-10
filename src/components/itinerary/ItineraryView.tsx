@@ -779,14 +779,10 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
               <div className="pt-6 border-t border-zinc-200/80">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-emerald-800">
                       Completed Escapes ({completedTrips.length})
                     </h3>
                   </div>
-                  <span className="text-[11px] font-bold text-zinc-400">
-                    Stored in Passport Booklet
-                  </span>
                 </div>
                 {viewMode === "grid" ? renderGrid(completedTrips) : renderLine(completedTrips)}
               </div>

@@ -335,5 +335,5 @@ npm run preview
 - **Video Demonstration**: [YouTube Link](https://youtu.be/O1C6u-I6iaM)
 
 <p align="center">
-  Crafted with precision, passion, and WebGPU by <strong>Team Axiom</strong> 🚀
+  Crafted with precision and passion by <strong>Team Axiom</strong>
 </p>

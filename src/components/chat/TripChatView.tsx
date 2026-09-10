@@ -660,7 +660,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
           }`}
         >
           {/* Sidebar Header */}
-          <div className="p-4 sm:p-5 border-b border-zinc-100 space-y-3">
+          <div className="p-4 sm:p-5 border-b border-zinc-100 space-y-3 shrink-0">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-zinc-950 tracking-tight">Messages</h2>
               <span className="text-xs font-bold text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-lg">

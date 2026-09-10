@@ -60,8 +60,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-purple-200 selection:text-zinc-950">
-      {/* Dynamic Floating Navbar on Scroll */}
-      <Navbar onOpenAuth={handleOpenAuth} />
+          {/* Dynamic Floating Navbar on Scroll */}
+          <Navbar onOpenAuth={handleOpenAuth} />
 
       <main>
         {/* Section 1: Jitter Exact Hero with 3D Flipping Logos */}

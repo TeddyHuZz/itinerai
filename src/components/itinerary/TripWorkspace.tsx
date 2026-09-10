@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -797,9 +798,9 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
       {/* ======================================================================= */}
       {/* ADD ACTIVITY MODAL                                                      */}
       {/* ======================================================================= */}
-      <AnimatePresence>
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/60 backdrop-blur-xs">
+      {isAddModalOpen && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm">
             <div className="absolute inset-0" onClick={() => setIsAddModalOpen(false)} />
 
             <motion.div
@@ -970,8 +971,9 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

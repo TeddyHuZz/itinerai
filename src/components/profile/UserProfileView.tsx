@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
@@ -364,10 +365,11 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
             {/* Sidebar Tab Selectors */}
             <nav className="space-y-1.5 pt-2">
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab("about")}
-                className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left font-bold text-sm cursor-pointer ${
+                className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left font-bold text-sm cursor-pointer relative ${
                   activeTab === "about"
                     ? "bg-zinc-100 text-zinc-950 ring-1 ring-zinc-300/80 shadow-2xs"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50"
@@ -377,13 +379,20 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                 </div>
                 <span className="flex-1">About me</span>
-                {activeTab === "about" && <div className="w-1.5 h-4 rounded-full bg-[#963314]" />}
-              </button>
+                {activeTab === "about" && (
+                  <motion.div
+                    layoutId="activeProfileSidebarIndicator"
+                    className="w-1.5 h-4 rounded-full bg-[#963314]"
+                    transition={{ type: "spring", stiffness: 480, damping: 32 }}
+                  />
+                )}
+              </motion.button>
 
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab("trips")}
-                className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left font-bold text-sm cursor-pointer ${
+                className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left font-bold text-sm cursor-pointer relative ${
                   activeTab === "trips"
                     ? "bg-zinc-100 text-zinc-950 ring-1 ring-zinc-300/80 shadow-2xs"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50"
@@ -396,13 +405,20 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-200/70 text-zinc-700">
                   {unlockedTrips.length}
                 </span>
-                {activeTab === "trips" && <div className="w-1.5 h-4 rounded-full bg-[#963314]" />}
-              </button>
+                {activeTab === "trips" && (
+                  <motion.div
+                    layoutId="activeProfileSidebarIndicator"
+                    className="w-1.5 h-4 rounded-full bg-[#963314]"
+                    transition={{ type: "spring", stiffness: 480, damping: 32 }}
+                  />
+                )}
+              </motion.button>
 
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab("connections")}
-                className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left font-bold text-sm cursor-pointer ${
+                className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left font-bold text-sm cursor-pointer relative ${
                   activeTab === "connections"
                     ? "bg-zinc-100 text-zinc-950 ring-1 ring-zinc-300/80 shadow-2xs"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50"
@@ -415,8 +431,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-200/70 text-zinc-700">
                   3
                 </span>
-                {activeTab === "connections" && <div className="w-1.5 h-4 rounded-full bg-[#963314]" />}
-              </button>
+                {activeTab === "connections" && (
+                  <motion.div
+                    layoutId="activeProfileSidebarIndicator"
+                    className="w-1.5 h-4 rounded-full bg-[#963314]"
+                    transition={{ type: "spring", stiffness: 480, damping: 32 }}
+                  />
+                )}
+              </motion.button>
             </nav>
 
             {/* Authentic Passport Booklet Page & Level Progress Card */}
@@ -478,9 +500,17 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
           {/* RIGHT COLUMN: Tab Content Display                                 */}
           {/* ================================================================= */}
           <section className="lg:col-span-8 space-y-10">
-            {/* TAB 1: ABOUT ME VIEW */}
-            {activeTab === "about" && (
-              <div className="space-y-10">
+            <AnimatePresence mode="wait">
+              {/* TAB 1: ABOUT ME VIEW */}
+              {activeTab === "about" && (
+                <motion.div
+                  key="tab-about"
+                  initial={{ opacity: 0, y: 12, filter: "blur(3px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -8, filter: "blur(3px)" }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  className="space-y-10"
+                >
                 {/* Header with Title and Edit Pill */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-950">
@@ -646,12 +676,19 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     })}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* TAB 2: PAST TRIPS VIEW */}
             {activeTab === "trips" && (
-              <div className="space-y-6">
+              <motion.div
+                key="tab-trips"
+                initial={{ opacity: 0, y: 12, filter: "blur(3px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, filter: "blur(3px)" }}
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-6"
+              >
                 <div>
                   <h3 className="text-2xl font-black text-zinc-950">Past Trips Completed</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">
@@ -692,12 +729,19 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                       </div>
                     ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* TAB 3: CONNECTIONS VIEW */}
             {activeTab === "connections" && (
-              <div className="space-y-6">
+              <motion.div
+                key="tab-connections"
+                initial={{ opacity: 0, y: 12, filter: "blur(3px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, filter: "blur(3px)" }}
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-6"
+              >
                 <div>
                   <h3 className="text-2xl font-black text-zinc-950">Travel Connections</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">
@@ -743,8 +787,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </section>
         </div>
       </main>
@@ -761,11 +806,11 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
       {/* ===================================================================== */}
       {/* MODAL 2: EDIT PROFILE MODAL                                           */}
       {/* ===================================================================== */}
-      <AnimatePresence>
-        {isEditModalOpen && (
+      {isEditModalOpen && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
           <div
             onClick={() => setIsEditModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm cursor-pointer"
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
@@ -859,8 +904,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
@@ -900,13 +946,13 @@ const renderModalChopSVG = (type: TravelChop["svgType"], color: string) => {
 const ChopDetailModal: React.FC<ChopDetailModalProps> = ({ isOpen, onClose, chop }) => {
   useBodyScrollLock(isOpen, onClose);
 
-  if (!isOpen || !chop) return null;
+  if (!isOpen || !chop || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div
         onClick={onClose}
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm cursor-pointer"
+        className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm cursor-pointer"
       >
         <motion.div
           onClick={(e) => e.stopPropagation()}
@@ -996,6 +1042,7 @@ const ChopDetailModal: React.FC<ChopDetailModalProps> = ({ isOpen, onClose, chop
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

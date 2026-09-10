@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar as CalendarIcon,
@@ -68,7 +69,7 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
   startDate: initialStart,
   endDate: initialEnd,
   onApply,
-  zIndexClass = "z-50",
+  zIndexClass = "z-100",
 }) => {
   useBodyScrollLock(isOpen, onClose);
 
@@ -193,15 +194,15 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
     setSelectedEnd(null);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === "undefined") return null;
 
   const hasEndBoundary = Boolean(
     selectedEnd || (hoveredDate && selectedStart && hoveredDate.getTime() > selectedStart.getTime())
   );
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className={`fixed inset-0 ${zIndexClass} flex items-center justify-center p-3 sm:p-4 bg-zinc-950/45 backdrop-blur-xs`}>
+      <div className={`fixed inset-0 ${zIndexClass} flex items-center justify-center p-3 sm:p-4 bg-zinc-950/60 backdrop-blur-sm`}>
         {/* Backdrop click to close */}
         <div className="absolute inset-0" onClick={onClose} />
 
@@ -409,6 +410,7 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

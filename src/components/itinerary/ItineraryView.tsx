@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DateRangePickerModal } from "../dashboard/DateRangePickerModal";
 import {
@@ -605,9 +606,9 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
       {/* ======================================================================= */}
       {/* CREATE NEW TRIP MODAL                                                   */}
       {/* ======================================================================= */}
-      <AnimatePresence>
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/60 backdrop-blur-xs">
+      {isCreateModalOpen && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm">
             <div
               className="absolute inset-0"
               onClick={() => setIsCreateModalOpen(false)}
@@ -718,15 +719,16 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* ======================================================================= */}
       {/* TRIP DETAIL PREVIEW MODAL                                               */}
       {/* ======================================================================= */}
-      <AnimatePresence>
-        {selectedTrip && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/60 backdrop-blur-xs">
+      {selectedTrip && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm">
             <div
               className="absolute inset-0"
               onClick={() => {
@@ -946,8 +948,9 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
               </div>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Date Range Picker Calendar Modal */}
       <DateRangePickerModal

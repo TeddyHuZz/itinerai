@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -408,6 +408,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [bookingNotice, setBookingNotice] = useState<string | null>(null);
 
+  // Scroll to top on tab change so full-height views like Chat always dock cleanly to the top navbar
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [currentNav]);
+
   // Sorting States
   const [flightSort, setFlightSort] = useState<FlightSortType>("recommended");
   const [hotelSort, setHotelSort] = useState<HotelSortType>("recommended");
@@ -514,13 +519,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Brand & User Profile */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => setCurrentNav("profile")}
               className={`w-10 h-10 rounded-full overflow-hidden ring-2 transition-all cursor-pointer relative group ${
                 currentNav === "profile"
                   ? "ring-[#963314] ring-offset-2 scale-105 shadow-sm"
-                  : "ring-[#963314]/30 hover:ring-[#963314] hover:scale-105"
+                  : "ring-[#963314]/30 hover:ring-[#963314]"
               } shrink-0 bg-amber-100`}
               title="Click to view Alex Morgan's profile & passport chops"
               aria-label="View user profile and achievements"
@@ -530,7 +537,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 alt={user.name}
                 className="w-full h-full object-cover"
               />
-            </button>
+            </motion.button>
 
             <button
               type="button"
@@ -547,54 +554,82 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl border border-zinc-200/60">
+          <nav className="hidden md:flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl border border-zinc-200/60 relative">
             <button
               onClick={() => setCurrentNav("search")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                currentNav === "search"
-                  ? "bg-white text-[#963314] shadow-xs"
-                  : "text-zinc-600 hover:text-zinc-900"
+              className={`relative px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                currentNav === "search" ? "text-[#963314]" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              <Search className="w-3.5 h-3.5" />
-              <span>Search</span>
+              {currentNav === "search" && (
+                <motion.div
+                  layoutId="activeDesktopNavTab"
+                  className="absolute inset-0 bg-white rounded-lg shadow-xs"
+                  transition={{ type: "spring", stiffness: 480, damping: 34 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5" />
+                <span>Search</span>
+              </span>
             </button>
 
             <button
               onClick={() => setCurrentNav("itinerary")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                currentNav === "itinerary"
-                  ? "bg-white text-[#963314] shadow-xs"
-                  : "text-zinc-600 hover:text-zinc-900"
+              className={`relative px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                currentNav === "itinerary" ? "text-[#963314]" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              <CalendarDays className="w-3.5 h-3.5" />
-              <span>Itinerary</span>
+              {currentNav === "itinerary" && (
+                <motion.div
+                  layoutId="activeDesktopNavTab"
+                  className="absolute inset-0 bg-white rounded-lg shadow-xs"
+                  transition={{ type: "spring", stiffness: 480, damping: 34 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>Itinerary</span>
+              </span>
             </button>
 
             <button
               onClick={() => setCurrentNav("team")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                currentNav === "team"
-                  ? "bg-white text-[#963314] shadow-xs"
-                  : "text-zinc-600 hover:text-zinc-900"
+              className={`relative px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                currentNav === "team" ? "text-[#963314]" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Chat</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#f15a24]" />
+              {currentNav === "team" && (
+                <motion.div
+                  layoutId="activeDesktopNavTab"
+                  className="absolute inset-0 bg-white rounded-lg shadow-xs"
+                  transition={{ type: "spring", stiffness: 480, damping: 34 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Chat</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f15a24]" />
+              </span>
             </button>
 
             <button
               onClick={() => setCurrentNav("expenses")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                currentNav === "expenses"
-                  ? "bg-white text-[#963314] shadow-xs"
-                  : "text-zinc-600 hover:text-zinc-900"
+              className={`relative px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                currentNav === "expenses" ? "text-[#963314]" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              <Wallet className="w-3.5 h-3.5" />
-              <span>Expenses</span>
+              {currentNav === "expenses" && (
+                <motion.div
+                  layoutId="activeDesktopNavTab"
+                  className="absolute inset-0 bg-white rounded-lg shadow-xs"
+                  transition={{ type: "spring", stiffness: 480, damping: 34 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5" />
+                <span>Expenses</span>
+              </span>
             </button>
           </nav>
 
@@ -633,59 +668,100 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* ======================================================================= */}
       {/* 2. MAIN DYNAMIC VIEW: PROFILE, ITINERARY, TEAM, EXPENSES, OR SEARCH HUB */}
       {/* ======================================================================= */}
-      {currentNav === "profile" ? (
-        <UserProfileView
-          onBack={() => setCurrentNav("search")}
-          onOpenTrip={(tripId) => {
-            setActiveChatTripId(tripId);
-            setCurrentNav("itinerary");
-          }}
-          initialUser={{
-            name: user.name,
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
-            location: "Kuala Lumpur, Malaysia",
-            job: "Product Designer & Travel Enthusiast",
-            languages: "English, Chinese, and Malay",
-            bio: "I'm Alex, I love traveling and exploring new places with friends. Always looking for hidden cafes, scenic hikes, local food markets, and cultural immersion.",
-          }}
-        />
-      ) : currentNav === "itinerary" ? (
-        <ItineraryView
-          onNavigateToSearch={(prefill) => {
-            if (prefill?.destination) {
-              setDestination(prefill.destination);
-            }
-            if (prefill?.dates) {
-              setDates(prefill.dates);
-            }
-            setCurrentNav("search");
-          }}
-          onNavigateToChat={(tripId) => {
-            setActiveChatTripId(tripId);
-            setCurrentNav("team");
-          }}
-        />
-      ) : currentNav === "team" ? (
-        <TripChatView
-          trips={INITIAL_TRIPS}
-          activeTripId={activeChatTripId}
-          onSelectTrip={(trip) => setActiveChatTripId(trip.id)}
-          onOpenItinerary={() => setCurrentNav("itinerary")}
-          onCopyLink={(trip) => {
-            navigator.clipboard.writeText(`https://itinerai.com/trip/${trip.id}?join=${trip.inviteCode}`).catch(() => {});
-            setBookingNotice(`Invite link for ${trip.destination} copied to clipboard!`);
-            setTimeout(() => setBookingNotice(null), 3000);
-          }}
-        />
-      ) : currentNav === "expenses" ? (
-        <ExpensesView
-          trips={INITIAL_TRIPS}
-          activeTripId={activeChatTripId}
-          onSelectTrip={(trip) => setActiveChatTripId(trip.id)}
-          onOpenItinerary={() => setCurrentNav("itinerary")}
-        />
-      ) : (
-        <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 flex flex-col pb-24 md:pb-12">
+      <AnimatePresence mode="wait">
+        {currentNav === "profile" ? (
+          <motion.div
+            key="profile"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 w-full"
+          >
+            <UserProfileView
+              onBack={() => setCurrentNav("search")}
+              initialUser={{
+                name: user.name,
+                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+                location: "Kuala Lumpur, Malaysia",
+                job: "Product Designer & Travel Enthusiast",
+                languages: "English, Chinese, and Malay",
+                bio: "I'm Alex, I love traveling and exploring new places with friends. Always looking for hidden cafes, scenic hikes, local food markets, and cultural immersion.",
+              }}
+            />
+          </motion.div>
+        ) : currentNav === "itinerary" ? (
+          <motion.div
+            key="itinerary"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 w-full"
+          >
+            <ItineraryView
+              onNavigateToSearch={(prefill) => {
+                if (prefill?.destination) {
+                  setDestination(prefill.destination);
+                }
+                if (prefill?.dates) {
+                  setDates(prefill.dates);
+                }
+                setCurrentNav("search");
+              }}
+              onNavigateToChat={(tripId) => {
+                setActiveChatTripId(tripId);
+                setCurrentNav("team");
+              }}
+            />
+          </motion.div>
+        ) : currentNav === "team" ? (
+          <motion.div
+            key="team"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 w-full min-h-0 overflow-hidden flex flex-col"
+          >
+            <TripChatView
+              trips={INITIAL_TRIPS}
+              activeTripId={activeChatTripId}
+              onSelectTrip={(trip) => setActiveChatTripId(trip.id)}
+              onOpenItinerary={() => setCurrentNav("itinerary")}
+              onCopyLink={(trip) => {
+                navigator.clipboard.writeText(`https://itinerai.com/trip/${trip.id}?join=${trip.inviteCode}`).catch(() => {});
+                setBookingNotice(`Invite link for ${trip.destination} copied to clipboard!`);
+                setTimeout(() => setBookingNotice(null), 3000);
+              }}
+            />
+          </motion.div>
+        ) : currentNav === "expenses" ? (
+          <motion.div
+            key="expenses"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 w-full"
+          >
+            <ExpensesView
+              trips={INITIAL_TRIPS}
+              activeTripId={activeChatTripId}
+              onSelectTrip={(trip) => setActiveChatTripId(trip.id)}
+              onOpenItinerary={() => setCurrentNav("itinerary")}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="search"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 w-full flex flex-col"
+          >
+            <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 flex flex-col pb-24 md:pb-12">
         {/* Search Bar */}
         <div className="w-full mb-6">
           <form
@@ -1489,7 +1565,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </>
         )}
       </main>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ======================================================================= */}
       {/* 5. BOTTOM NAVIGATION BAR (Mobile Only)                                  */}
@@ -1498,28 +1576,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <button
           type="button"
           onClick={() => setCurrentNav("search")}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors ${
+          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors relative ${
             currentNav === "search" ? "text-[#963314]" : "text-zinc-500 hover:text-zinc-800"
           }`}
         >
           <Search className="w-5 h-5" />
           <span className="text-[11px] font-bold">Search</span>
           {currentNav === "search" && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
+            <motion.span
+              layoutId="activeMobileNavDot"
+              className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5"
+              transition={{ type: "spring", stiffness: 480, damping: 34 }}
+            />
           )}
         </button>
 
         <button
           type="button"
           onClick={() => setCurrentNav("itinerary")}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors ${
+          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors relative ${
             currentNav === "itinerary" ? "text-[#963314]" : "text-zinc-500 hover:text-zinc-800"
           }`}
         >
           <CalendarDays className="w-5 h-5" />
           <span className="text-[11px] font-bold">Itinerary</span>
           {currentNav === "itinerary" && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
+            <motion.span
+              layoutId="activeMobileNavDot"
+              className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5"
+              transition={{ type: "spring", stiffness: 480, damping: 34 }}
+            />
           )}
         </button>
 
@@ -1536,28 +1622,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
           <span className="text-[11px] font-bold">Chat</span>
           {currentNav === "team" && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
+            <motion.span
+              layoutId="activeMobileNavDot"
+              className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5"
+              transition={{ type: "spring", stiffness: 480, damping: 34 }}
+            />
           )}
         </button>
 
         <button
           type="button"
           onClick={() => setCurrentNav("expenses")}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors ${
+          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors relative ${
             currentNav === "expenses" ? "text-[#963314]" : "text-zinc-500 hover:text-zinc-800"
           }`}
         >
           <Wallet className="w-5 h-5" />
           <span className="text-[11px] font-bold">Expenses</span>
           {currentNav === "expenses" && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
+            <motion.span
+              layoutId="activeMobileNavDot"
+              className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5"
+              transition={{ type: "spring", stiffness: 480, damping: 34 }}
+            />
           )}
         </button>
 
         <button
           type="button"
           onClick={() => setCurrentNav("profile")}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors ${
+          className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors relative ${
             currentNav === "profile" ? "text-[#963314]" : "text-zinc-500 hover:text-zinc-800"
           }`}
         >
@@ -1574,7 +1668,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
           <span className="text-[11px] font-bold">Profile</span>
           {currentNav === "profile" && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5" />
+            <motion.span
+              layoutId="activeMobileNavDot"
+              className="w-1.5 h-1.5 rounded-full bg-[#963314] mt-0.5"
+              transition={{ type: "spring", stiffness: 480, damping: 34 }}
+            />
           )}
         </button>
       </nav>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -475,10 +475,16 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
 
   // Drag & Drop and Reordering States
   const [draggedActivityId, setDraggedActivityId] = useState<string | null>(null);
-  const [dragOverActivityId, setDragOverActivityId] = useState<string | null>(null);
+  const draggedActivityIdRef = useRef<string | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<{
+    id: string;
+    position: "above" | "below";
+  } | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
+    draggedActivityIdRef.current = id;
     setDraggedActivityId(id);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", id);
@@ -501,48 +507,132 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    if (draggedActivityId && draggedActivityId !== id && dragOverActivityId !== id) {
-      setDragOverActivityId(id);
-    }
-  };
+    const currentDragged = draggedActivityIdRef.current || draggedActivityId;
+    if (!currentDragged || currentDragged === id) return;
 
-  const handleDragLeave = (e: React.DragEvent, id: string) => {
-    const currentTarget = e.currentTarget as HTMLElement;
-    const relatedTarget = e.relatedTarget as Node | null;
-    if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
-      if (dragOverActivityId === id) {
-        setDragOverActivityId(null);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const relY = e.clientY - rect.top;
+    const height = rect.height;
+
+    // Hysteresis deadzone: prevents rapid flipping near the middle boundary
+    let position: "above" | "below";
+    if (dragOverTarget?.id === id) {
+      if (dragOverTarget.position === "above") {
+        position = relY > height * 0.58 ? "below" : "above";
+      } else {
+        position = relY < height * 0.42 ? "above" : "below";
       }
+    } else {
+      position = relY < height * 0.5 ? "above" : "below";
+    }
+
+    if (!dragOverTarget || dragOverTarget.id !== id || dragOverTarget.position !== position) {
+      setDragOverTarget({ id, position });
     }
   };
 
   const handleDragEnd = () => {
+    draggedActivityIdRef.current = null;
     setDraggedActivityId(null);
-    setDragOverActivityId(null);
+    setDragOverTarget(null);
+    setDragOverDay(null);
   };
 
-  const handleDropOnActivity = (targetId: string) => {
-    setDragOverActivityId(null);
-    if (!draggedActivityId || draggedActivityId === targetId) {
-      setDraggedActivityId(null);
-      return;
-    }
+  // Drop directly onto an activity (above or below)
+  const handleDropOnActivity = (
+    e: React.DragEvent,
+    targetId: string,
+    position: "above" | "below"
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceId =
+      e.dataTransfer.getData("text/plain") || draggedActivityIdRef.current || draggedActivityId;
+
+    handleDragEnd();
+
+    if (!sourceId || sourceId === targetId) return;
 
     setActivities((prev) => {
-      const sourceIndex = prev.findIndex((a) => a.id === draggedActivityId);
-      const targetIndex = prev.findIndex((a) => a.id === targetId);
-      if (sourceIndex === -1 || targetIndex === -1) return prev;
+      const sourceAct = prev.find((a) => a.id === sourceId);
+      if (!sourceAct) return prev;
 
-      const targetAct = prev[targetIndex];
-      const updated = [...prev];
-      const [moved] = updated.splice(sourceIndex, 1);
-      const movedWithDay = { ...moved, day: targetAct.day };
-      updated.splice(targetIndex, 0, movedWithDay);
+      const withoutSource = prev.filter((a) => a.id !== sourceId);
+      const targetIndex = withoutSource.findIndex((a) => a.id === targetId);
+      if (targetIndex === -1) return prev;
 
-      return updated;
+      const targetAct = withoutSource[targetIndex];
+      const updatedSource = { ...sourceAct, day: targetAct.day };
+
+      const insertIndex = position === "above" ? targetIndex : targetIndex + 1;
+      const result = [...withoutSource];
+      result.splice(insertIndex, 0, updatedSource);
+
+      return result;
     });
+  };
 
-    setDraggedActivityId(null);
+  // Drop on Day Header or Day Group Container (moves to that day)
+  const handleDropOnDay = (e: React.DragEvent, targetDay: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceId =
+      e.dataTransfer.getData("text/plain") || draggedActivityIdRef.current || draggedActivityId;
+
+    handleDragEnd();
+
+    if (!sourceId) return;
+
+    setActivities((prev) => {
+      const sourceAct = prev.find((a) => a.id === sourceId);
+      if (!sourceAct) return prev;
+
+      const withoutSource = prev.filter((a) => a.id !== sourceId);
+      const firstTargetIndex = withoutSource.findIndex((a) => a.day === targetDay);
+      const updatedSource = { ...sourceAct, day: targetDay };
+
+      const result = [...withoutSource];
+      if (firstTargetIndex === -1) {
+        result.push(updatedSource);
+      } else {
+        result.splice(firstTargetIndex, 0, updatedSource);
+      }
+
+      return result;
+    });
+  };
+
+  // Drop on Transit Connector between two activities
+  const handleDropBetweenActivities = (
+    e: React.DragEvent,
+    _prevActId: string,
+    nextActId: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceId =
+      e.dataTransfer.getData("text/plain") || draggedActivityIdRef.current || draggedActivityId;
+
+    handleDragEnd();
+
+    if (!sourceId || sourceId === nextActId) return;
+
+    setActivities((prev) => {
+      const sourceAct = prev.find((a) => a.id === sourceId);
+      if (!sourceAct) return prev;
+
+      const withoutSource = prev.filter((a) => a.id !== sourceId);
+      const nextIndex = withoutSource.findIndex((a) => a.id === nextActId);
+      if (nextIndex === -1) return prev;
+
+      const nextAct = withoutSource[nextIndex];
+      const updatedSource = { ...sourceAct, day: nextAct.day };
+
+      const result = [...withoutSource];
+      result.splice(nextIndex, 0, updatedSource);
+
+      return result;
+    });
   };
 
   const moveActivityWithinDay = (id: string, direction: "up" | "down") => {
@@ -1007,19 +1097,26 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                 const isFirstInDay = index === 0;
                 const isLastInDay = index === dayList.length - 1;
                 const isDraggingThis = draggedActivityId === act.id;
-                const isTargetDragOver = dragOverActivityId === act.id && draggedActivityId !== act.id;
+                const isDropAbove =
+                  dragOverTarget?.id === act.id &&
+                  dragOverTarget.position === "above" &&
+                  draggedActivityId !== act.id;
+                const isDropBelow =
+                  dragOverTarget?.id === act.id &&
+                  dragOverTarget.position === "below" &&
+                  draggedActivityId !== act.id;
                 const isMenuOpen = menuOpenId === act.id;
 
                 return (
                   <React.Fragment key={act.id}>
                     <motion.div
-                      layout
+                      layout={!draggedActivityId}
                       layoutId={`act-card-${act.id}`}
                       data-activity-card="true"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{
-                        opacity: isDraggingThis ? 0.35 : 1,
-                        scale: isDraggingThis ? 0.98 : isTargetDragOver ? 1.02 : 1,
+                        opacity: isDraggingThis ? 0.3 : 1,
+                        scale: isDraggingThis ? 0.98 : 1,
                         y: 0,
                       }}
                       transition={{
@@ -1028,17 +1125,42 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                         opacity: { duration: 0.16 },
                       }}
                       onDragOver={(e) => handleDragOver(e, act.id)}
-                      onDragLeave={(e) => handleDragLeave(e, act.id)}
-                      onDrop={() => handleDropOnActivity(act.id)}
+                      onDrop={(e) => {
+                        const pos = dragOverTarget?.position || "below";
+                        handleDropOnActivity(e, act.id, pos);
+                      }}
                       onDragEnd={handleDragEnd}
-                      className={`bg-white rounded-2xl border transition-all duration-150 p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 group relative ${
-                        isTargetDragOver
-                          ? "ring-2 ring-[#963314] ring-offset-2 border-[#963314] bg-orange-50/40 shadow-lg"
-                          : isDraggingThis
+                      className={`bg-white rounded-2xl border transition-colors duration-150 p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 group relative ${
+                        isDraggingThis
                           ? "border-dashed border-zinc-400 bg-zinc-50 shadow-inner"
+                          : isDropAbove
+                          ? "border-t-[#963314] shadow-xs"
+                          : isDropBelow
+                          ? "border-b-[#963314] shadow-xs"
                           : "border-zinc-200/90 shadow-2xs hover:shadow-md"
                       }`}
                     >
+                      {/* Insertion Line Indicator Above (Absolute - 0 layout shift) */}
+                      {isDropAbove && (
+                        <div className="absolute -top-1.5 inset-x-2 h-1 bg-[#963314] rounded-full shadow-md z-30 pointer-events-none flex items-center justify-between">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#963314] -ml-1 border-2 border-white ring-1 ring-[#963314]" />
+                          <span className="bg-[#963314] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shadow-xs">
+                            Insert Above
+                          </span>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#963314] -mr-1 border-2 border-white ring-1 ring-[#963314]" />
+                        </div>
+                      )}
+
+                      {/* Insertion Line Indicator Below (Absolute - 0 layout shift) */}
+                      {isDropBelow && (
+                        <div className="absolute -bottom-1.5 inset-x-2 h-1 bg-[#963314] rounded-full shadow-md z-30 pointer-events-none flex items-center justify-between">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#963314] -ml-1 border-2 border-white ring-1 ring-[#963314]" />
+                          <span className="bg-[#963314] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shadow-xs">
+                            Insert Below
+                          </span>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#963314] -mr-1 border-2 border-white ring-1 ring-[#963314]" />
+                        </div>
+                      )}
                       <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1">
                         {/* Drag Handle & Up/Down Reorder */}
                         <div className="flex flex-col items-center justify-start pt-0.5 shrink-0 select-none">
@@ -1268,9 +1390,17 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
 
                     {/* Transit Connector between consecutive activities in the same day */}
                     {nextAct && (
-                      <div className="relative py-1 flex items-center justify-center">
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => handleDropBetweenActivities(e, act.id, nextAct.id)}
+                        className="relative py-1 flex items-center justify-center cursor-default"
+                        title="Drop here to insert between these spots"
+                      >
                         <div className="absolute inset-x-8 sm:inset-x-16 h-px border-dashed border-t border-zinc-200" />
-                        <div className="relative z-10 px-3 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200/90 text-[11px] font-bold text-zinc-700 flex items-center gap-2 shadow-2xs transition-all">
+                        <div className="relative z-10 px-3 py-1 rounded-full bg-zinc-50 hover:bg-orange-50 border border-zinc-200/90 hover:border-[#963314] text-[11px] font-bold text-zinc-700 flex items-center gap-2 shadow-2xs transition-all">
                           {(() => {
                             const leg = calculateTransitLeg(act, nextAct);
                             return (
@@ -1305,12 +1435,62 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                   <div className="space-y-6">
                     {availableDays.map((dayNum, dayIndex) => {
                       const dayActs = activities.filter((a) => a.day === dayNum);
-                      if (dayActs.length === 0) return null;
+
+                      if (dayActs.length === 0) {
+                        return (
+                          <div
+                            key={`day-group-${dayNum}`}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                              if (dragOverDay !== dayNum) setDragOverDay(dayNum);
+                            }}
+                            onDragLeave={() => setDragOverDay(null)}
+                            onDrop={(e) => handleDropOnDay(e, dayNum)}
+                            className={`rounded-2xl border-2 border-dashed p-4 text-center transition-all ${
+                              dragOverDay === dayNum
+                                ? "border-[#963314] bg-orange-50/60 ring-2 ring-[#963314]/30"
+                                : "border-zinc-200 bg-zinc-50/40"
+                            }`}
+                          >
+                            <span className="text-xs font-bold text-zinc-500">
+                              Day {dayNum} — No spots yet. Drop an activity here to move to Day {dayNum}!
+                            </span>
+                          </div>
+                        );
+                      }
 
                       return (
-                        <div key={`day-group-${dayNum}`} className="space-y-3">
+                        <div
+                          key={`day-group-${dayNum}`}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                          }}
+                          onDrop={(e) => handleDropOnDay(e, dayNum)}
+                          className="space-y-3"
+                        >
                           {/* Day Section Header */}
-                          <div className="flex items-center justify-between bg-zinc-100/90 rounded-2xl px-4 py-2.5 border border-zinc-200/80 shadow-2xs">
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                              if (dragOverDay !== dayNum) setDragOverDay(dayNum);
+                            }}
+                            onDragLeave={(e) => {
+                              const currentTarget = e.currentTarget as HTMLElement;
+                              const relatedTarget = e.relatedTarget as Node | null;
+                              if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+                                if (dragOverDay === dayNum) setDragOverDay(null);
+                              }
+                            }}
+                            onDrop={(e) => handleDropOnDay(e, dayNum)}
+                            className={`flex items-center justify-between rounded-2xl px-4 py-2.5 border shadow-2xs transition-all duration-150 ${
+                              dragOverDay === dayNum
+                                ? "bg-amber-100/90 border-[#963314] ring-2 ring-[#963314]/40 scale-[1.01]"
+                                : "bg-zinc-100/90 border-zinc-200/80"
+                            }`}
+                          >
                             <div className="flex items-center gap-2.5">
                               <span className="w-7 h-7 rounded-xl bg-[#963314] text-white flex items-center justify-center text-xs font-black tracking-tight shadow-xs">
                                 D{dayNum}
@@ -1320,7 +1500,11 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                                   Day {dayNum} Itinerary
                                 </h3>
                                 <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
-                                  {dayActs.length} {dayActs.length === 1 ? "activity" : "activities"} scheduled
+                                  {dragOverDay === dayNum ? (
+                                    <span className="text-[#963314] font-bold">Release to move spot to Day {dayNum}</span>
+                                  ) : (
+                                    `${dayActs.length} ${dayActs.length === 1 ? "activity" : "activities"} scheduled`
+                                  )}
                                 </p>
                               </div>
                             </div>

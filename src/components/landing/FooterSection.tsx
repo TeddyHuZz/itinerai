@@ -55,7 +55,7 @@ export const FooterSection: React.FC<FooterSectionProps> = ({
             <a href="#design" className="text-zinc-600 hover:text-zinc-950 transition-colors">Trip Canvas</a>
             <a href="#animate" className="text-zinc-600 hover:text-zinc-950 transition-colors">AI Itineraries</a>
             <a href="#collaborate" className="text-zinc-600 hover:text-zinc-950 transition-colors">Collaborate</a>
-            <a href="#export" className="text-zinc-600 hover:text-zinc-950 transition-colors">Export & Wallet</a>
+            <a href="#stays" className="text-zinc-600 hover:text-zinc-950 transition-colors">Flights & Stays</a>
           </div>
 
           {/* Column 2: Templates */}

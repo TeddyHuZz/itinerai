@@ -9,114 +9,110 @@ interface BentoFeatureCard {
 }
 
 const BENTO_CARDS: BentoFeatureCard[] = [
-  // Card 1: The complete travel suite (Vibrant iridescent Glass artwork)
+  // Card 1: Intelligent Itinerary Workspace
   {
-    id: "complete-suite",
-    titleTag: "The complete travel suite",
+    id: "itinerary-workspace",
+    titleTag: "Intelligent Itinerary Workspace",
     description:
-      "Jump into a familiar interface and start planning instantly — with every flight search, hotel deal, and itinerary block just one click away.",
+      "Plan multi-day adventures with automated route efficiency, real-time transit times, and interactive day-by-day activity blocks.",
     renderArtwork: () => (
-      <div className="w-full h-64 sm:h-72 rounded-2xl bg-linear-to-tr from-[#0037ff] via-[#38bdf8] to-[#fb923c] p-6 flex items-center justify-center relative overflow-hidden shadow-xl">
-        {/* Glow sphere effect */}
-        <div className="absolute w-52 h-52 rounded-full bg-linear-to-b from-amber-300 via-sky-400 to-blue-700 blur-xs shadow-2xl" />
-        
-        {/* Frosted Glass Typographic Overlay */}
-        <div className="relative z-10 text-white font-black text-6xl sm:text-7xl tracking-tighter drop-shadow-2xl select-none">
-          Glass
+      <div className="w-full h-64 sm:h-72 rounded-2xl bg-[#f5f5f7] p-2 sm:p-3 flex items-center justify-center relative overflow-hidden shadow-xs border border-zinc-200/80 group/bento">
+        {/* Mock Browser Header */}
+        <div className="w-full h-full rounded-xl overflow-hidden relative flex flex-col border border-zinc-200 bg-white">
+          <div className="h-6 bg-zinc-100 px-3 flex items-center gap-1.5 shrink-0 border-b border-zinc-200">
+            <div className="w-2 h-2 rounded-full bg-rose-400" />
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-[9px] font-mono text-zinc-500 ml-2">app.itinerai.com/itinerary</span>
+          </div>
+          <div className="relative flex-1 overflow-hidden p-1 flex items-center justify-center">
+            <img
+              src="/screenshots/itinerary_workspace.png"
+              alt="ItinerAI Kyoto Workspace"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover/bento:scale-102"
+            />
+          </div>
         </div>
       </div>
     ),
   },
 
-  // Card 2: Custom AI effects (Architectural grid with frosted floating pill)
+  // Card 2: On-Device Llama 3.2 AI & Group Consensus
   {
-    id: "custom-ai",
+    id: "ai-group-consensus",
     isNew: true,
-    titleTag: "Custom AI effects",
+    titleTag: "On-Device Llama 3.2 & Group Polls",
     description:
-      "Turn ideas into signature itineraries with just a prompt. Build your own tools and schedules with Itinerai AI, then tweak and reuse them so everything stays on-brand.",
+      "Private, zero-latency WebGPU AI running directly in your browser. Launch group decision polls to eliminate chat indecision instantly.",
     renderArtwork: () => (
-      <div className="w-full h-64 sm:h-72 rounded-2xl bg-white p-4 flex items-center justify-center relative overflow-hidden border border-zinc-200 shadow-xl">
-        {/* Multi-window architectural collage */}
-        <div className="grid grid-cols-3 gap-2 w-full h-full opacity-90">
-          <div className="rounded-lg bg-linear-to-b from-amber-100 to-amber-300 overflow-hidden" />
-          <div className="rounded-lg bg-linear-to-b from-sky-200 to-sky-500 overflow-hidden" />
-          <div className="rounded-lg bg-linear-to-b from-stone-200 to-stone-400 overflow-hidden" />
-        </div>
-
-        {/* Frosted floating prompt badge */}
-        <div className="absolute z-10 px-5 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 shadow-xl flex items-center gap-3">
-          <div className="text-left">
-            <span className="text-zinc-900 font-extrabold text-sm sm:text-base tracking-tight block">
-              Generate an infinite grid
-            </span>
+      <div className="w-full h-64 sm:h-72 rounded-2xl bg-[#f5f5f7] p-2 sm:p-3 flex items-center justify-center relative overflow-hidden shadow-xs border border-zinc-200/80 group/bento">
+        <div className="w-full h-full rounded-xl overflow-hidden relative flex flex-col border border-zinc-200 bg-white">
+          <div className="h-6 bg-zinc-100 px-3 flex items-center gap-1.5 shrink-0 border-b border-zinc-200">
+            <div className="w-2 h-2 rounded-full bg-rose-400" />
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-[9px] font-mono text-purple-600 ml-2 font-semibold">⚡ Llama-3.2 WebGPU</span>
           </div>
-          <div className="w-6 h-6 rounded-full bg-zinc-900/10 flex items-center justify-center text-zinc-900 font-bold text-xs">
-            ↑
+          <div className="relative flex-1 overflow-hidden p-1 flex items-center justify-center">
+            <img
+              src="/screenshots/ai_chat_poll.png"
+              alt="AI Chat and Group Poll"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover/bento:scale-102"
+            />
           </div>
         </div>
       </div>
     ),
   },
 
-  // Card 3: Editorial Travel Journals (Three side-by-side legacy posters)
+  // Card 3: OCR Digital Receipts & Fair Splitting
   {
-    id: "editorial-journals",
-    titleTag: "Infinite canvas & timelines",
+    id: "ocr-expenses",
+    titleTag: "OCR Digital Receipts & Fair Splitting",
     description:
-      "Organize multiple travel days, backup rain plans, and group packing checklists on one shared, zoomable studio canvas.",
+      "Scan crumpled paper bills with Tesseract.js. Automatically extract totals, calculate net group balances, and settle debts with one click.",
     renderArtwork: () => (
-      <div className="w-full h-64 sm:h-72 rounded-2xl bg-white p-6 flex items-center justify-center relative overflow-hidden border border-zinc-200 shadow-xl">
-        <div className="flex items-center justify-center gap-3 sm:gap-4">
-          {/* Poster 1 */}
-          <div className="w-24 sm:w-28 h-36 sm:h-40 bg-[#f4f4f5] border border-zinc-300 rounded-lg p-2 flex flex-col justify-between text-zinc-900 shadow-md">
-            <div className="text-[7px] font-black leading-tight tracking-tight uppercase">
-              SINCE—1972<br />A LEGACY<br />WOVEN IN SILK
-            </div>
-            <div className="w-6 h-6 rounded bg-zinc-900" />
+      <div className="w-full h-64 sm:h-72 rounded-2xl bg-[#f5f5f7] p-2 sm:p-3 flex items-center justify-center relative overflow-hidden shadow-xs border border-zinc-200/80 group/bento">
+        <div className="w-full h-full rounded-xl overflow-hidden relative flex flex-col border border-zinc-200 bg-white">
+          <div className="h-6 bg-zinc-100 px-3 flex items-center gap-1.5 shrink-0 border-b border-zinc-200">
+            <div className="w-2 h-2 rounded-full bg-rose-400" />
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-[9px] font-mono text-zinc-500 ml-2">app.itinerai.com/expenses</span>
           </div>
-
-          {/* Poster 2 */}
-          <div className="w-24 sm:w-28 h-36 sm:h-40 bg-zinc-950 text-white rounded-lg p-2 flex flex-col justify-between shadow-xl">
-            <div className="w-12 h-14 bg-zinc-800 rounded mx-auto mt-1" />
-            <div className="text-[7px] font-mono tracking-widest uppercase text-zinc-400">
-              SHIBUYA 2026
-            </div>
-          </div>
-
-          {/* Poster 3 */}
-          <div className="w-24 sm:w-28 h-36 sm:h-40 bg-[#111111] text-white rounded-lg p-2 flex flex-col justify-between shadow-md">
-            <div className="text-[7px] font-black leading-tight uppercase">
-              SINCE—1972<br />A LEGACY<br />WOVEN IN SILK
-            </div>
-            <div className="w-8 h-8 rounded-full bg-zinc-800 ml-auto" />
+          <div className="relative flex-1 overflow-hidden p-1 flex items-center justify-center">
+            <img
+              src="/screenshots/expenses_split.png"
+              alt="Kyoto Expenses Split"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover/bento:scale-102"
+            />
           </div>
         </div>
       </div>
     ),
   },
 
-  // Card 4: Layered Art Collage (Chair & scenic postcards)
+  // Card 4: Curated Stays & Live Flights
   {
-    id: "layered-art",
-    titleTag: "Export & share everywhere",
+    id: "stays-flights",
+    titleTag: "Curated Stays & Live Flights",
     description:
-      "Share interactive real-time trip links with your friends or export offline PDF itineraries and Apple Wallet passes in seconds.",
+      "Search real-time airline fares with Amadeus and discover top-rated Airbnb, Booking.com, and Trivago accommodations directly within your itinerary.",
     renderArtwork: () => (
-      <div className="w-full h-64 sm:h-72 rounded-2xl bg-white p-6 flex items-center justify-center relative overflow-hidden border border-zinc-200 shadow-xl">
-        <div className="relative w-48 h-48 flex items-center justify-center">
-          {/* Layered landscape cards */}
-          <div className="absolute w-36 h-36 rounded-xl bg-linear-to-tr from-emerald-600 to-amber-300 rotate-6 shadow-md" />
-          <div className="absolute w-36 h-36 rounded-xl bg-linear-to-bl from-sky-400 to-indigo-600 -rotate-6 shadow-md" />
-
-          {/* Foreground white card with blue artistic sketch */}
-          <div className="relative z-10 w-32 h-40 bg-white rounded-xl shadow-2xl border border-zinc-100 p-3 flex items-center justify-center">
-            <svg
-              className="w-20 h-20 text-[#0051ff] stroke-current fill-none stroke-2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M7 3v8h10V3M7 11v8M17 11v8M5 19h14" />
-            </svg>
+      <div className="w-full h-64 sm:h-72 rounded-2xl bg-[#f5f5f7] p-2 sm:p-3 flex items-center justify-center relative overflow-hidden shadow-xs border border-zinc-200/80 group/bento">
+        <div className="w-full h-full rounded-xl overflow-hidden relative flex flex-col border border-zinc-200 bg-white">
+          <div className="h-6 bg-zinc-100 px-3 flex items-center gap-1.5 shrink-0 border-b border-zinc-200">
+            <div className="w-2 h-2 rounded-full bg-rose-400" />
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-[9px] font-mono text-zinc-500 ml-2">app.itinerai.com/stays</span>
+          </div>
+          <div className="relative flex-1 overflow-hidden p-1 flex items-center justify-center">
+            <img
+              src="/screenshots/hotel_search.png"
+              alt="Curated Group Stays"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover/bento:scale-102"
+            />
           </div>
         </div>
       </div>

@@ -1,11 +1,11 @@
 import React from "react";
 import { 
-  PenTool, 
-  Grid3X3, 
-  Sparkles, 
-  Droplet, 
-  Video, 
-  Type
+  Cpu, 
+  Plane, 
+  Receipt, 
+  Vote, 
+  Award, 
+  FileCheck
 } from "lucide-react";
 
 interface FeatureDetailItem {
@@ -16,34 +16,34 @@ interface FeatureDetailItem {
 
 const DETAIL_ITEMS: FeatureDetailItem[] = [
   {
-    icon: <PenTool className="w-4 h-4 text-zinc-950" />,
-    title: "Pen tool and morphing",
-    description: "Animate along curved paths and morph custom vector shapes and travel route maps.",
+    icon: <Cpu className="w-4 h-4 text-purple-600" />,
+    title: "On-Device WebGPU AI",
+    description: "Runs Llama 3.2 locally inside your browser via WebGPU. Private, instantaneous, and zero cloud API subscription costs.",
   },
   {
-    icon: <Grid3X3 className="w-4 h-4 text-zinc-950" />,
-    title: "Gradients & themes",
-    description: "Build and customize smooth multi-stop gradients across cards, tags, and itinerary blocks.",
+    icon: <Plane className="w-4 h-4 text-blue-600" />,
+    title: "Real-Time Amadeus GDS",
+    description: "Live airfare searches and hotel availability with direct hand-off to Skyscanner and Expedia for seamless booking.",
   },
   {
-    icon: <Sparkles className="w-4 h-4 text-zinc-950" />,
-    title: "Blur & glass depth",
-    description: "Add live backdrop blur to maps and layers, or dial in depth for instant focus.",
+    icon: <Receipt className="w-4 h-4 text-emerald-600" />,
+    title: "Tesseract OCR Bill Scanner",
+    description: "Snap crumpled receipts from overseas dinners or Grab rides to digitize line items and auto-calculate fair debts.",
   },
   {
-    icon: <Droplet className="w-4 h-4 text-zinc-950" />,
-    title: "Blend modes",
-    description: "Add depth and editorial texture to your trip cards and shared media reels.",
+    icon: <Vote className="w-4 h-4 text-amber-600" />,
+    title: "Group Consensus Polls",
+    description: "Eliminate endless WhatsApp deliberation with built-in activity voting, quorum thresholds, and automatic itinerary lock-in.",
   },
   {
-    icon: <Video className="w-4 h-4 text-zinc-950" />,
-    title: "Audio and video",
-    description: "Easily attach live vlog snippets, restaurant reels, and voice notes directly to pins.",
+    icon: <Award className="w-4 h-4 text-rose-600" />,
+    title: "Gamified Badges & XP",
+    description: "Earn collectible badges like Globe Trotter, Frugal Flyer, and Night Owl as your travel group plans and finishes trips.",
   },
   {
-    icon: <Type className="w-4 h-4 text-zinc-950" />,
-    title: "1,500+ fonts & icons",
-    description: "Choose from a library of 1,500+ free fonts, or import custom group assets in a click.",
+    icon: <FileCheck className="w-4 h-4 text-indigo-600" />,
+    title: "Tax-Compliant E-Invoicing",
+    description: "Generate officially certified digital e-invoices with LHDN QR codes, companion debt allocations, and printable expense sheets.",
   },
 ];
 

@@ -14,44 +14,24 @@ interface StackCard {
 }
 
 const STACK_CARDS: StackCard[] = [
-  // Card 1: Animate with agents (Light gray card)
+  // Card 1: Coordinate Escapes & Companions (Light gray card)
   {
     id: "card-1",
-    tag: "Animate with agents",
+    tag: "Coordinate Escapes & Companions",
     tagBg: "bg-black",
     tagText: "text-white",
     description:
-      "Skip the blank canvas. Describe your idea and let Itinerai AI generate editable itineraries, routes, and budget variations, ready for you to tweak and reuse.",
+      "Skip the blank canvas. Manage multiple active journeys, invite travel companions, and switch seamlessly between trips across Kyoto, Amalfi, and Zermatt.",
     bgColor: "bg-[#f5f5f7]",
     textColor: "text-zinc-950",
     descColor: "text-zinc-600",
     renderVisual: () => (
-      <div className="relative w-full h-64 sm:h-72 flex items-center justify-center overflow-hidden">
-        {/* Fan of travel poster cards */}
-        <div className="relative w-56 h-56 flex items-center justify-center">
-          <div className="absolute -left-6 w-36 h-48 bg-black text-white p-3 rounded-xl -rotate-12 shadow-lg flex flex-col justify-between font-black text-xs">
-            <span className="text-zinc-400 font-mono text-[9px]">OCTOBER</span>
-            <span className="text-xl leading-none">KYOTO NIGHT</span>
-          </div>
-
-          <div className="absolute -right-6 w-36 h-48 bg-[#0047ff] text-white p-3 rounded-xl rotate-12 shadow-lg flex flex-col justify-between font-black text-xs">
-            <span className="text-blue-200 font-mono text-[9px]">LIVE SYNC</span>
-            <span className="text-xl leading-none">SHIBUYA STREAM</span>
-          </div>
-
-          <div className="relative z-10 w-44 h-56 bg-linear-to-b from-orange-400 via-rose-500 to-purple-700 text-white rounded-2xl shadow-2xl p-4 flex flex-col justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-white/90">
-              FEATURED TRIP
-            </span>
-            <div className="text-left font-black text-2xl leading-tight">
-              Fire<br />of love.<br />
-              <span className="text-orange-200 text-base font-semibold">Streaming now.</span>
-            </div>
-            <div className="text-[9px] font-mono opacity-80 border-t border-white/30 pt-2">
-              4 TRAVELERS · CONFIRMED
-            </div>
-          </div>
-        </div>
+      <div className="w-full h-64 sm:h-72 rounded-2xl overflow-hidden shadow-xl border border-zinc-200 bg-white p-2.5 flex items-center justify-center group">
+        <img
+          src="/screenshots/your_escapes.png"
+          alt="Your Escapes Multi-Trip Hub"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-102"
+        />
       </div>
     ),
   },
@@ -63,40 +43,29 @@ const STACK_CARDS: StackCard[] = [
     tagBg: "bg-white",
     tagText: "text-zinc-950",
     description:
-      "Refine AI-generated plans or build your own trip from scratch with the most intuitive collaborative travel canvas to keep everyone aligned.",
+      "Refine AI-generated plans or build your trip from scratch with real-time flight fares, direct carrier hand-offs, and multi-day itinerary synchronization.",
     bgColor: "bg-[#00a8ff]",
     textColor: "text-white",
     descColor: "text-white/90",
     renderVisual: () => (
-      <div className="relative w-full h-64 sm:h-72 flex items-center justify-center">
-        <div className="w-full max-w-sm p-5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 text-white text-left shadow-xl">
-          <div className="flex items-center justify-between text-xs font-mono mb-3 border-b border-white/20 pb-2">
-            <span>LIVE CONSENSUS</span>
-            <span className="bg-white/20 px-2 py-0.5 rounded font-bold">4/4 VOTED</span>
-          </div>
-          <div className="space-y-2 text-xs">
-            <div className="p-2.5 rounded-lg bg-white/20 flex items-center justify-between font-semibold">
-              <span>✈️ Direct Flight (JAL 006)</span>
-              <span className="text-emerald-200 font-bold">$580</span>
-            </div>
-            <div className="p-2.5 rounded-lg bg-white/20 flex items-center justify-between font-semibold">
-              <span>🏨 Shibuya Stream Suite (4 beds)</span>
-              <span className="text-emerald-200 font-bold">$160/nt</span>
-            </div>
-          </div>
-        </div>
+      <div className="w-full h-64 sm:h-72 rounded-2xl overflow-hidden shadow-xl border border-white/20 bg-white p-2.5 flex items-center justify-center group">
+        <img
+          src="/screenshots/flight_search.png"
+          alt="Amadeus Live Flight Search"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-102"
+        />
       </div>
     ),
   },
 
-  // Card 3: Ship motion at scale (Pastel Lilac / Purple card with huge 5x)
+  // Card 3: Align groups at scale (Pastel Lilac / Purple card with huge 5x)
   {
     id: "card-3",
-    tag: "Ship travel at scale",
+    tag: "Align groups at scale",
     tagBg: "bg-white",
     tagText: "text-zinc-950",
     description:
-      "Iterate, collaborate, and get sign-off fast in a shared workspace, and easily handle itinerary changes, weather re-routing, and instant expense splitting.",
+      "Iterate, collaborate, and get sign-off fast in a shared workspace, and easily handle itinerary changes, route optimization, and instant expense splitting.",
     bgColor: "bg-[#a78bfa]",
     textColor: "text-zinc-950",
     descColor: "text-zinc-900/80",

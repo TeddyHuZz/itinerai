@@ -11,169 +11,164 @@ interface ShowcaseCard {
 }
 
 const SHOWCASE_CARDS: ShowcaseCard[] = [
-  // Card 1: Orbit: Cards (Rico Supply) - from screenshot
+  // Card 1: Kyoto Autumn Itinerary
   {
-    id: "orbit-cards",
-    title: "Orbit: Cards",
-    subtitle: "Rico Supply",
-    avatarText: "rico",
-    avatarBg: "bg-[#0051ff]",
+    id: "kyoto-itinerary",
+    title: "Kyoto Autumn Itinerary",
+    subtitle: "AI Route • 95% Transit Efficiency",
+    avatarText: "KYO",
+    avatarBg: "bg-rose-600",
     renderArtwork: () => (
-      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-zinc-200 rounded-xl shadow-2xl p-3 flex items-center justify-center overflow-hidden relative border border-zinc-300">
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* Background card fan */}
-          <div className="absolute -left-2 w-28 h-36 bg-zinc-800 rounded-lg -rotate-12 shadow-lg flex items-center justify-center text-white text-[9px] font-bold">
-            BODY WORK
-          </div>
-          <div className="absolute w-32 h-44 bg-white rounded-lg shadow-xl p-3 text-zinc-950 font-black text-xs leading-none z-10 flex flex-col justify-between">
-            <span className="text-[14px]">BODY WORK 197 NOW</span>
-            <span className="text-[10px] text-zinc-400 font-mono">1973</span>
-          </div>
-          <div className="absolute -right-2 w-28 h-36 bg-amber-400 rounded-lg rotate-12 shadow-lg p-2 flex flex-col justify-end text-black font-black text-xs">
-            PARK
-          </div>
-        </div>
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/itinerary_workspace.png"
+          alt="Kyoto Itinerary Workspace"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
       </div>
     ),
   },
 
-  // Card 2: Blend Modes: Double Exposure (Jitter) - from screenshot
+  // Card 2: Llama 3.2 WebGPU Group Decision Poll
   {
-    id: "blend-modes",
-    title: "Blend Modes: Double Exposure",
-    subtitle: "Itinerai",
-    avatarText: "Itinerai",
-    avatarBg: "bg-black",
+    id: "ai-group-poll",
+    title: "AI Decision Consensus",
+    subtitle: "Llama 3.2 WebGPU • Live Voting",
+    avatarText: "AI",
+    avatarBg: "bg-purple-600",
     renderArtwork: () => (
-      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-[#1a1a1a] rounded-xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-800">
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* Stylized statue warrior & horse graphic */}
-          <svg
-            className="w-40 h-40 text-zinc-200 fill-current drop-shadow-xl"
-            viewBox="0 0 24 24"
-          >
-            <path d="M19.5 12c-1.5-2-4-3-6.5-2.5l1.5-4.5L12 3l-2.5 4-4 2 1.5 3.5C5 14 4 16 4 18.5c0 1.5 1 2.5 2.5 2.5h11c1.5 0 2.5-1 2.5-2.5 0-2.5-1.5-4.5-0.5-6.5z" />
-          </svg>
-          <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/80" />
-        </div>
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/ai_chat_poll.png"
+          alt="Llama 3.2 Group Decision Poll"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
       </div>
     ),
   },
 
-  // Card 3: The Stack: Sale (Jitter) - from screenshot
+  // Card 3: Smart Expense Splitting & Net Balances
   {
-    id: "the-stack-sale",
-    title: "The Stack: Sale",
-    subtitle: "Itinerai",
-    avatarText: "Itinerai",
-    avatarBg: "bg-black",
+    id: "kyoto-expenses",
+    title: "Smart Expense Splitting",
+    subtitle: "Tesseract OCR • Net Group Balances",
+    avatarText: "EXP",
+    avatarBg: "bg-emerald-600",
     renderArtwork: () => (
-      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-[#0047ff] text-white rounded-xl shadow-2xl p-5 flex flex-col justify-between overflow-hidden relative">
-        <div className="flex justify-between items-center text-[10px] font-bold tracking-wider text-white/80">
-          <span>❖ Mango</span>
-          <span className="font-mono text-[9px]">juliemang.com</span>
-        </div>
-
-        {/* Center radial dots pattern + Sale title */}
-        <div className="relative my-auto flex flex-col items-center justify-center text-center">
-          <div className="absolute inset-0 flex items-center justify-center opacity-30">
-            <div className="w-36 h-36 rounded-full border border-dashed border-white" />
-            <div className="absolute w-24 h-24 rounded-full border border-dashed border-white" />
-          </div>
-          <span className="relative z-10 text-[23px] sm:text-[25px] font-black tracking-tight drop-shadow-md">
-            Sale: 30% Off
-          </span>
-        </div>
-
-        <div className="text-right text-[8px] font-mono text-white/60">
-          LIMITED EDITION
-        </div>
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/expenses_split.png"
+          alt="Kyoto Expenses and Group Balances"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
       </div>
     ),
   },
 
-  // Card 4: Stretched Type Repeater (Exact Blue/White typography poster style)
+  // Card 4: Live Flight Search
   {
-    id: "stretched-type",
-    title: "Stretched Type Repeater",
-    subtitle: "Itinerai",
-    avatarText: "Itinerai",
-    avatarBg: "bg-black",
+    id: "flight-search",
+    title: "Live Flight Search",
+    subtitle: "Amadeus GDS • Non-Stop Aggregation",
+    avatarText: "FLT",
+    avatarBg: "bg-blue-600",
     renderArtwork: () => (
-      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-white rounded-xl shadow-2xl p-4 flex flex-col justify-between overflow-hidden relative border border-blue-100">
-        <div className="text-[#0026ff] font-black leading-[0.82] tracking-tighter text-[44px] select-none uppercase">
-          <div className="scale-y-125 origin-top">LOVE</div>
-          <div className="bg-[#0026ff] text-white px-1 my-1 scale-y-110">HATE</div>
-          <div className="scale-y-150 origin-bottom">OVELO</div>
-          <div className="text-[28px] tracking-widest opacity-80 mt-1">ITINERAI</div>
-        </div>
-        <div className="absolute inset-0 bg-linear-to-tr from-blue-600/5 to-transparent pointer-events-none" />
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/flight_search.png"
+          alt="Amadeus Flight Search"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
       </div>
     ),
   },
 
-  // Card 5: Ripple Effect (Monochrome portrait with glass rings)
+  // Card 5: Hotel & Stay Search
   {
-    id: "ripple-effect",
-    title: "Ripple Effect",
-    subtitle: "Itinerai",
-    avatarText: "Itinerai",
-    avatarBg: "bg-black",
+    id: "hotel-search",
+    title: "Curated Group Stays",
+    subtitle: "Airbnb & Booking.com Live Rates",
+    avatarText: "STAY",
+    avatarBg: "bg-amber-600",
     renderArtwork: () => (
-      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-black rounded-xl shadow-2xl overflow-hidden relative flex items-center justify-center border border-zinc-200">
-        <div className="absolute inset-0 bg-radial from-zinc-200 via-zinc-400 to-zinc-950 opacity-90" />
-        
-        {/* Concentric glass distortion rings */}
-        <div className="relative z-10 w-44 h-44 rounded-full border border-white/40 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-full border border-white/60 flex items-center justify-center backdrop-blur-[1px]">
-            <div className="w-20 h-20 rounded-full border border-white/80 flex items-center justify-center backdrop-blur-[2px]">
-              <span className="text-[10px] font-mono tracking-widest text-white/90 uppercase font-bold">
-                ACME®
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-3 right-3 text-[8px] font-mono tracking-wider text-white/70 uppercase">
-          Spring/Summer Collection
-        </div>
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/hotel_search.png"
+          alt="Hotel and Stay Search"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
       </div>
     ),
   },
 
-  // Card 6: The Stack: Livestream
+  // Card 6: Digital E-Invoice & OCR
   {
-    id: "the-stack",
-    title: "The Stack: Livestream",
-    subtitle: "Itinerai",
-    avatarText: "Itinerai",
-    avatarBg: "bg-black",
+    id: "digital-einvoice",
+    title: "Digital E-Invoice & OCR",
+    subtitle: "LHDN Compliant • Auto Split Breakdown",
+    avatarText: "INV",
+    avatarBg: "bg-emerald-600",
     renderArtwork: () => (
-      <div className="w-60 sm:w-65 h-60 sm:h-65 bg-[#0047ff] text-white rounded-xl shadow-2xl p-5 flex flex-col justify-between overflow-hidden relative">
-        <div>
-          <h4 className="text-[22px] font-extrabold leading-[1.05] tracking-tight">
-            Livestream
-          </h4>
-          <p className="text-[17px] font-bold text-white/90">
-            July 15, 2026
-          </p>
-          <div className="flex items-center gap-1 text-[11px] font-medium text-white/80 mt-1">
-            <span>☼ 8-10am</span>
-          </div>
-        </div>
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/digital_einvoice.png"
+          alt="Digital E-Invoice"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
+      </div>
+    ),
+  },
 
-        <div className="flex justify-center items-center py-2">
-          <div className="relative w-16 h-16 flex items-center justify-center">
-            <div className="w-12 h-12 bg-white/20 rounded-lg rotate-45 backdrop-blur-xs border border-white/40 shadow-inner" />
-            <div className="absolute w-8 h-8 bg-white/40 rounded-md rotate-12 border border-white/60" />
-            <div className="absolute w-4 h-4 bg-white rounded-sm shadow-md" />
-          </div>
-        </div>
+  // Card 7: Passport Chops Collection
+  {
+    id: "passport-chops",
+    title: "Passport Chops Collection",
+    subtitle: "Collectible Travel Stamps & Badges",
+    avatarText: "CHOP",
+    avatarBg: "bg-purple-600",
+    renderArtwork: () => (
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/passport_chops.png"
+          alt="Passport Chops Collection"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
+      </div>
+    ),
+  },
 
-        <div className="flex items-center justify-between text-[9px] font-bold tracking-wider text-white/80 uppercase">
-          <span>❖ Mango</span>
-          <span className="font-normal lowercase text-[8px] opacity-80">Save your spot...</span>
-        </div>
+  // Card 8: Your Escapes Multi-Trip Hub
+  {
+    id: "your-escapes",
+    title: "Your Escapes Hub",
+    subtitle: "Multi-Trip Dashboard • Active & Past Escapes",
+    avatarText: "HUB",
+    avatarBg: "bg-indigo-600",
+    renderArtwork: () => (
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/your_escapes.png"
+          alt="Your Escapes Multi-Trip Hub"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
+      </div>
+    ),
+  },
+
+  // Card 9: Trip Companion Roster & Link Sharing
+  {
+    id: "trip-share-modal",
+    title: "Companion Co-Planning",
+    subtitle: "Instant Share Links • Planned Highlights Sync",
+    avatarText: "CREW",
+    avatarBg: "bg-teal-600",
+    renderArtwork: () => (
+      <div className="w-full h-64 sm:h-72 bg-white rounded-2xl shadow-md overflow-hidden relative border border-zinc-200/80 flex items-center justify-center p-2 group/art">
+        <img
+          src="/screenshots/trip_share_modal.png"
+          alt="Trip Companions and Share Modal"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover/art:scale-102"
+        />
       </div>
     ),
   },

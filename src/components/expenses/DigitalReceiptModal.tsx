@@ -208,7 +208,7 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
   expense,
   tripDestination = "Trip",
 }) => {
-  useBodyScrollLock(isOpen && !!expense);
+  useBodyScrollLock(isOpen && !!expense, onClose);
 
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -387,12 +387,16 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm">
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm cursor-pointer"
+      >
         <motion.div
+          onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh] border border-zinc-200"
+          className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh] border border-zinc-200 cursor-default"
         >
           {/* Header Bar */}
           <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/80">

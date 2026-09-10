@@ -11,17 +11,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth }) => {
       <div className="max-w-7xl mx-auto px-6 sm:px-12">
         {/* Main Hero Container */}
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-          {/* Top Pill / Badge */}
-          <button
-            onClick={() => onOpenAuth?.("signup")}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#f4f4f5] hover:bg-[#e4e4e7] text-zinc-800 text-[13px] font-medium transition-colors mb-10 cursor-pointer shadow-2xs"
-          >
-            <span className="font-bold text-zinc-950">Superagents:</span>
-            <span>AI agents, built right into Itinerai</span>
-            <span className="text-[#6366f1] font-semibold ml-1 hover:underline">
-              Learn more
-            </span>
-          </button>
 
           {/* Massive Jitter-Style Headline */}
           <h1 className="text-[3.75rem] sm:text-[5.5rem] md:text-[6.5rem] lg:text-[7.25rem] font-black tracking-[-0.04em] text-zinc-950 leading-[0.98] mb-10 select-none">

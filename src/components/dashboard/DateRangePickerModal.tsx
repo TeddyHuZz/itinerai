@@ -70,7 +70,7 @@ export const DateRangePickerModal: React.FC<DateRangePickerModalProps> = ({
   onApply,
   zIndexClass = "z-50",
 }) => {
-  useBodyScrollLock(isOpen);
+  useBodyScrollLock(isOpen, onClose);
 
   const [selectedStart, setSelectedStart] = useState<Date | null>(initialStart);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(initialEnd);

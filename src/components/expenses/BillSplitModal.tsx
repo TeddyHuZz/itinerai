@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -59,13 +59,11 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
   companions,
   onConfirmExpense,
 }) => {
-  useBodyScrollLock(isOpen);
-
-  if (!isOpen || !receiptData) return null;
+  useBodyScrollLock(isOpen, onClose);
 
   // Safe fallback companion list if none passed
-  const members: CompanionMember[] =
-    companions.length > 0
+  const members: CompanionMember[] = useMemo(() => {
+    return companions.length > 0
       ? companions
       : [
           {
@@ -89,15 +87,25 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
             avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
           },
         ];
+  }, [companions]);
 
   const [paidBy, setPaidBy] = useState<string>(() => members[0]?.name || "You");
-  const [items, setItems] = useState<ScannedItem[]>(() => {
-    // By default, assign all items to all members equally
-    return receiptData.items.map((item) => ({
-      ...item,
-      assignedTo: members.map((m) => m.name),
-    }));
-  });
+  const [items, setItems] = useState<ScannedItem[]>([]);
+
+  // Sync state whenever receiptData changes or modal opens
+  useEffect(() => {
+    if (receiptData) {
+      setPaidBy(members[0]?.name || "You");
+      setItems(
+        receiptData.items.map((item) => ({
+          ...item,
+          assignedTo: members.map((m) => m.name),
+        }))
+      );
+    }
+  }, [receiptData, members]);
+
+  if (!isOpen || !receiptData) return null;
 
   // Toggle member assignment for a specific item
   const handleToggleMember = (itemId: string, memberName: string) => {
@@ -195,12 +203,16 @@ export const BillSplitModal: React.FC<BillSplitModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm">
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm cursor-pointer"
+      >
         <motion.div
+          onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[92vh] border border-zinc-200"
+          className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[92vh] border border-zinc-200 cursor-default"
         >
           {/* Header */}
           <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/80">

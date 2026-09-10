@@ -55,7 +55,7 @@ export async function fetchOnlinePlaceImage(
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "Api-User-Agent": "ItinerAI/1.0 (https://itinerai.app; hello@itinerai.app)",
+        "Api-User-Agent": "ItinerAI/1.0 (https://axiom-itinerai.vercel.app; swenfei04@gmail.com)",
       },
     });
     clearTimeout(timeout);

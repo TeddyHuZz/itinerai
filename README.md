@@ -42,7 +42,7 @@
 
 ## 🎬 Demo
 
-> _Screenshots and live demo link coming soon._
+🌐 **Live Demo:** [https://axiom-itinerai.vercel.app](https://axiom-itinerai.vercel.app)
 
 ---
 
@@ -248,6 +248,8 @@ The itinerary's route optimizer uses **Haversine distance calculation** with a l
 # Clone the repository
 git clone https://github.com/TeddyHuZz/itinerai.git
 cd itinerai
+
+# Or visit the live demo at https://axiom-itinerai.vercel.app
 
 # Install dependencies
 npm install

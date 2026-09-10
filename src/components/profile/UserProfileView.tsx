@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,6 +14,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { getUnlockedChopIds, getAllChops } from "../../services/chopStore";
 
 // ============================================================================
 // Types & Interfaces
@@ -153,147 +154,39 @@ const AmalfiCoastSVG: React.FC<{ color: string }> = ({ color }) => (
 );
 
 // ============================================================================
-// Curated Authentic Travel Chops Dataset
-// ============================================================================
-const INITIAL_CHOPS: TravelChop[] = [
-  {
-    id: "chop-brinchang",
-    name: "Brinchang",
-    location: "Berincang, Malaysia",
-    country: "Malaysia",
-    countryCode: "MY",
-    date: "September 2026",
-    status: "unlocked",
-    accentColor: {
-      border: "border-emerald-600",
-      bg: "bg-emerald-50/40 hover:bg-emerald-50/70",
-      text: "text-emerald-700",
-      fill: "#059669",
-    },
-    svgType: "mountain",
-    companions: ["Sarah Chen", "David Kim"],
-    coordinates: "4.4925° N, 101.3892° E",
-    description: "Alpine tea sanctuary situated 1,500m high in the Cameron Highlands. Misty morning hikes and fresh strawberry groves.",
-    highlightMemory: "Morning trek up Gunung Brinchang cloud forest with sunrise over the BOH tea valley.",
-  },
-  {
-    id: "chop-melaka",
-    name: "Melaka Tengah",
-    location: "Malacca, Malaysia",
-    country: "Malaysia",
-    countryCode: "MY",
-    date: "March 2026",
-    status: "unlocked",
-    accentColor: {
-      border: "border-rose-500",
-      bg: "bg-rose-50/40 hover:bg-rose-50/70",
-      text: "text-rose-600",
-      fill: "#e11d48",
-    },
-    svgType: "sun",
-    companions: ["Elena Rostova", "Alex Morgan"],
-    coordinates: "2.1896° N, 102.2501° E",
-    description: "UNESCO World Heritage trading port known for Red Square Dutch architecture, Jonker Walk street food, and maritime history.",
-    highlightMemory: "Evening river cruise past illuminated heritage bridges and sampling authentic Nyonya cendol.",
-  },
-  {
-    id: "chop-sungai-karang",
-    name: "Sungai Karang",
-    location: "Kuantan, Malaysia",
-    country: "Malaysia",
-    countryCode: "MY",
-    date: "December 2025",
-    status: "unlocked",
-    accentColor: {
-      border: "border-amber-600",
-      bg: "bg-amber-50/40 hover:bg-amber-50/70",
-      text: "text-amber-700",
-      fill: "#d97706",
-    },
-    svgType: "tea",
-    companions: ["David Kim", "Sarah Chen"],
-    coordinates: "3.9142° N, 103.3644° E",
-    description: "Pristine East Coast beach haven renowned for breezy casuarina palms, artisanal batik crafts, and fresh seafood barbecue.",
-    highlightMemory: "Seaside sunset campfire with fresh grilled sea bass and coconut water under starry skies.",
-  },
-  {
-    id: "chop-johor-bahru",
-    name: "Johor Bahru",
-    location: "Johor Bahru, Malaysia",
-    country: "Malaysia",
-    countryCode: "MY",
-    date: "September 2025",
-    status: "unlocked",
-    accentColor: {
-      border: "border-indigo-600",
-      bg: "bg-indigo-50/40 hover:bg-indigo-50/70",
-      text: "text-indigo-700",
-      fill: "#4f46e5",
-    },
-    svgType: "palace",
-    companions: ["Sarah Chen", "Elena Rostova", "David Kim"],
-    coordinates: "1.4927° N, 103.7414° E",
-    description: "Southern cultural crossroads featuring royal Victorian architecture, Jalan Dhoby heritage cafes, and vibrant cross-border energy.",
-    highlightMemory: "Exploring Tan Hiok Nee heritage street and bakery hopping for freshly baked banana cake.",
-  },
-  {
-    id: "chop-bali",
-    name: "Bali Sea Sanctuary",
-    location: "Ubud & Seminyak, Indonesia",
-    country: "Indonesia",
-    countryCode: "ID",
-    date: "August 2026",
-    status: "unlocked",
-    accentColor: {
-      border: "border-teal-600",
-      bg: "bg-teal-50/40 hover:bg-teal-50/70",
-      text: "text-teal-700",
-      fill: "#0d9488",
-    },
-    svgType: "temple",
-    companions: ["Sarah Chen", "David Kim"],
-    coordinates: "8.5069° S, 115.2625° E",
-    description: "Island of the Gods. Sacred waterfall trails, lush terraced rice paddies, and beachfront seafood feasts under golden sunsets.",
-    highlightMemory: "Jimbaran Bay seafood grill split with companions right after Uluwatu Kecak fire dance.",
-  },
-  {
-    id: "chop-zermatt",
-    name: "Zermatt Alpine",
-    location: "Valais, Switzerland",
-    country: "Switzerland",
-    countryCode: "CH",
-    date: "Upcoming (Oct 2026)",
-    status: "locked",
-    accentColor: {
-      border: "border-violet-400",
-      bg: "bg-zinc-50 hover:bg-violet-50/30",
-      text: "text-violet-600",
-      fill: "#8b5cf6",
-    },
-    svgType: "matterhorn",
-    companions: ["Sarah Chen", "Elena Rostova"],
-    coordinates: "45.9765° N, 7.7491° E",
-    description: "Car-free glacier paradise beneath the iconic pyramidal peak of the Matterhorn. Glacial gondolas and Swiss fondue cabins.",
-    highlightMemory: "Gornergrat cogwheel train ride booked to witness sunrise over 29 alpine four-thousander peaks.",
-  },
-];
-
-// ============================================================================
 // Main User Profile Component
 // ============================================================================
 export const UserProfileView: React.FC<UserProfileViewProps> = ({
   initialUser,
 }) => {
   const [activeTab, setActiveTab] = useState<"about" | "trips" | "connections">("about");
-  const [chops] = useState<TravelChop[]>(INITIAL_CHOPS);
+  const [unlockedChopIds, setUnlockedChopIds] = useState<string[]>(() => getUnlockedChopIds());
   const [selectedChop, setSelectedChop] = useState<TravelChop | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleChopUpdate = () => {
+      setUnlockedChopIds(getUnlockedChopIds());
+    };
+    window.addEventListener("itinerai_chops_changed", handleChopUpdate);
+    return () => window.removeEventListener("itinerai_chops_changed", handleChopUpdate);
+  }, []);
+
+  const chops = useMemo<TravelChop[]>(() => {
+    return getAllChops(unlockedChopIds);
+  }, [unlockedChopIds]);
 
   // Dynamically compute completed/unlocked trips
   const unlockedTrips = useMemo(
     () => chops.filter((c) => c.status === "unlocked"),
     [chops]
   );
+
+  // Dynamic Passport Progression Calculation (6 chops per passport page / level)
+  const currentLevel = Math.floor(unlockedTrips.length / 6) + 1;
+  const stampsOnPage = unlockedTrips.length % 6;
+  const stampsNeeded = stampsOnPage === 0 ? 6 : 6 - stampsOnPage;
+  const progressPercent = Math.round((stampsOnPage / 6) * 100);
 
   // User Profile State (Demo account: Alex Morgan)
   const [user, setUser] = useState<UserProfileData>({
@@ -307,11 +200,19 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
     bio:
       initialUser?.bio ||
       "I'm Alex, I love traveling and exploring new places with friends. Always looking for hidden cafes, scenic hikes, local food markets, and cultural immersion.",
-    tripsCount: initialUser?.tripsCount || INITIAL_CHOPS.filter((c) => c.status === "unlocked").length,
+    tripsCount: initialUser?.tripsCount || unlockedTrips.length,
     reviewsCount: 12,
     monthsActive: 11,
     verified: true,
   });
+
+  // Keep trips count synchronized with unlocked stamps
+  useEffect(() => {
+    setUser((prev) => ({
+      ...prev,
+      tripsCount: unlockedTrips.length,
+    }));
+  }, [unlockedTrips.length]);
 
   // Edit form state
   const [editForm, setEditForm] = useState<UserProfileData>(user);
@@ -445,17 +346,17 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             <div className="p-5 rounded-3xl bg-linear-to-br from-orange-50/80 to-amber-50/50 border border-orange-200/80 space-y-3.5 shadow-2xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#963314] font-extrabold text-xs tracking-wider uppercase">
-                  <span>Passport Page 1 · Level 1</span>
+                  <span>Passport Page {currentLevel} · Level {currentLevel}</span>
                 </div>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-[#963314]">
-                  {unlockedTrips.length} / 6
+                  {stampsOnPage} / 6
                 </span>
               </div>
 
               {/* 6 Passport Stamp Visual Slots Grid */}
               <div className="grid grid-cols-6 gap-1.5 pt-1">
                 {[...Array(6)].map((_, i) => {
-                  const isStamped = i < unlockedTrips.length;
+                  const isStamped = i < stampsOnPage;
                   return (
                     <div
                       key={i}
@@ -464,7 +365,11 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                           ? "bg-[#963314] text-white border-[#963314] shadow-2xs"
                           : "border-dashed border-orange-300 bg-white/60 text-orange-400"
                       }`}
-                      title={isStamped ? `Stamp ${i + 1} collected` : "Slot 6 (Upcoming: Zermatt)"}
+                      title={
+                        isStamped
+                          ? `Stamp ${i + 1} collected on Page ${currentLevel}`
+                          : `Page ${currentLevel} Slot ${i + 1} (Unstamped)`
+                      }
                     >
                       {isStamped ? "✓" : i + 1}
                     </div>
@@ -473,9 +378,18 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               </div>
 
               <p className="text-xs text-zinc-600 leading-relaxed">
-                Passports have <strong>6 stamps per page</strong>. Complete your next trip to{" "}
-                <strong className="text-zinc-900">Zermatt</strong> to stamp the final slot on Page 1 and unlock{" "}
-                <strong className="text-[#963314]">Passport Page 2 (Level 2)</strong>!
+                Passports have <strong>6 stamps per page</strong>.{" "}
+                {stampsOnPage === 0 && unlockedTrips.length > 0 ? (
+                  <>
+                    Congratulations! You filled Page {currentLevel - 1}. Complete your next trip to start stamping{" "}
+                    <strong className="text-[#963314]">Passport Page {currentLevel}</strong>!
+                  </>
+                ) : (
+                  <>
+                    Complete <strong>{stampsNeeded} more {stampsNeeded === 1 ? "trip" : "trips"}</strong> to fill Page {currentLevel} and unlock{" "}
+                    <strong className="text-[#963314]">Passport Page {currentLevel + 1} (Level {currentLevel + 1})</strong>!
+                  </>
+                )}
               </p>
 
               {/* Progress Bar */}
@@ -484,13 +398,17 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <div
                     className="bg-[#963314] h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.round((unlockedTrips.length / 6) * 100)}%`,
+                      width: `${progressPercent}%`,
                     }}
                   />
                 </div>
                 <div className="flex justify-between text-[10px] font-semibold text-zinc-400">
-                  <span>83% filled</span>
-                  <span>1 trip to Level 2</span>
+                  <span>{progressPercent}% filled</span>
+                  <span>
+                    {stampsNeeded === 6 && stampsOnPage === 0
+                      ? "New page ready"
+                      : `${stampsNeeded} ${stampsNeeded === 1 ? "trip" : "trips"} to Level ${currentLevel + 1}`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -616,9 +534,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                       </p>
                     </div>
                     <span className="text-xs font-bold text-[#963314] bg-orange-100/70 px-3 py-1 rounded-full flex items-center gap-1.5">
-                      <span>Passport Page 1</span>
+                      <span>Passport Page {currentLevel}</span>
                       <span className="text-zinc-300">•</span>
-                      <span>{unlockedTrips.length} of 6 Stamped</span>
+                      <span>{unlockedTrips.length} Total Stamped</span>
                     </span>
                   </div>
 
@@ -920,7 +838,7 @@ interface ChopDetailModalProps {
   chop: TravelChop | null;
 }
 
-const renderModalChopSVG = (type: TravelChop["svgType"], color: string) => {
+export const renderModalChopSVG = (type: TravelChop["svgType"], color: string) => {
   switch (type) {
     case "mountain":
       return <MountainSVG color={color} />;

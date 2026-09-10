@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import {
   ArrowLeft,
   Calendar,
@@ -18,8 +19,17 @@ import {
   Plane,
   Users,
   MessageSquare,
+  Award,
+  CheckCircle2,
 } from "lucide-react";
 import type { TripItem } from "./ItineraryView";
+import {
+  isPastTripDate,
+  isTripCompleted,
+  completeAndUnlockTrip,
+  getChopForTrip,
+} from "../../services/chopStore";
+import { renderModalChopSVG } from "../profile/UserProfileView";
 
 export interface DayActivity {
   id: string;
@@ -292,6 +302,8 @@ interface TripWorkspaceProps {
   onNavigateToSearch?: (prefill?: { destination?: string; dates?: string }) => void;
   onNavigateToChat?: (tripId: string) => void;
   onCopyLink: (trip: TripItem) => void;
+  onUpdateTrip?: (updatedTrip: TripItem) => void;
+  onViewChopInProfile?: () => void;
 }
 
 export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
@@ -300,7 +312,35 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   onNavigateToSearch,
   onNavigateToChat,
   onCopyLink,
+  onUpdateTrip,
+  onViewChopInProfile,
 }) => {
+  const [isCompleted, setIsCompleted] = useState(
+    () => trip.status === "Completed" || isTripCompleted(trip.id)
+  );
+  const [showChopCelebration, setShowChopCelebration] = useState(false);
+  const isPast = useMemo(() => isPastTripDate(trip.endDate), [trip.endDate]);
+  const matchingChop = useMemo(() => getChopForTrip(trip), [trip]);
+
+  const handleCompleteTrip = () => {
+    setIsCompleted(true);
+    completeAndUnlockTrip(trip);
+    if (onUpdateTrip) {
+      onUpdateTrip({
+        ...trip,
+        status: "Completed",
+      });
+    }
+    try {
+      confetti({
+        particleCount: 130,
+        spread: 80,
+        origin: { y: 0.5 },
+        colors: ["#0d9488", "#f15a24", "#d97706", "#4f46e5", "#10b981", "#fbbf24"],
+      });
+    } catch {}
+    setShowChopCelebration(true);
+  };
   // Load default activities or generate starter activities if custom trip
   const [activities, setActivities] = useState<DayActivity[]>(() => {
     if (INITIAL_ACTIVITIES[trip.id]) {
@@ -440,6 +480,33 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
             <span className="hidden sm:inline">Invite Friends</span>
           </button>
 
+          {/* Complete Trip Action button when trip date is past today */}
+          {isPast && !isCompleted && (
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              onClick={handleCompleteTrip}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer group active:scale-95"
+              title="Trip date has ended! Click to complete trip and unlock location badge"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Complete Trip</span>
+            </motion.button>
+          )}
+
+          {isCompleted && (
+            <button
+              type="button"
+              onClick={() => setShowChopCelebration(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 shadow-2xs transition-all cursor-pointer"
+              title="Trip completed! Click to view your unlocked location chop badge"
+            >
+              <Award className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Chop Unlocked</span>
+            </button>
+          )}
+
           {onNavigateToSearch && (
             <button
               type="button"
@@ -469,19 +536,23 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/20" />
 
-          {/* Badge & Invite Code */}
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-xs ${
-                trip.status === "Confirmed"
-                  ? "bg-emerald-500/80 text-white border border-emerald-400/30"
-                  : trip.status === "Planning"
-                  ? "bg-amber-500/80 text-white border border-amber-400/30"
-                  : "bg-blue-500/80 text-white border border-blue-400/30"
-              }`}
-            >
-              {trip.status}
-            </span>
+          {/* Badge & Invite Code & Complete Trip Action */}
+          <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-xs ${
+                  isCompleted
+                    ? "bg-emerald-600/90 text-white border border-emerald-400/40"
+                    : trip.status === "Confirmed"
+                    ? "bg-emerald-500/80 text-white border border-emerald-400/30"
+                    : trip.status === "Planning"
+                    ? "bg-amber-500/80 text-white border border-amber-400/30"
+                    : "bg-blue-500/80 text-white border border-blue-400/30"
+                }`}
+              >
+                {isCompleted ? "Completed" : trip.status}
+              </span>
+            </div>
 
             <span className="text-[11px] font-bold bg-white/15 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20">
               Code: {trip.inviteCode}
@@ -969,6 +1040,115 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* ======================================================================= */}
+      {/* CELEBRATION MODAL: UNLOCKED LOCATION CHOP BADGE                         */}
+      {/* ======================================================================= */}
+      {showChopCelebration && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          <div
+            onClick={() => setShowChopCelebration(false)}
+            className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm cursor-pointer"
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-zinc-200 cursor-default"
+            >
+              {/* Modal Header */}
+              <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/80">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h3 className="text-sm font-black text-zinc-900">Trip Completed!</h3>
+                    <p className="text-[10px] font-mono text-emerald-700 font-bold">PASSPORT CHOP UNLOCKED</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowChopCelebration(false)}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-xl hover:bg-zinc-200/60 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Stamp Showcase */}
+              <div className="p-6 text-center space-y-4 bg-radial from-teal-50/60 via-white to-white">
+                <div
+                  className={`p-6 rounded-3xl border-3 mx-auto w-44 h-36 flex flex-col items-center justify-between shadow-sm ${
+                    matchingChop.accentColor.border
+                  } ${matchingChop.accentColor.bg}`}
+                >
+                  <span className={`text-base font-black tracking-tight ${matchingChop.accentColor.text}`}>
+                    {matchingChop.name}
+                  </span>
+                  <div className="w-16 h-10 flex items-center justify-center">
+                    <div className="scale-125">
+                      {renderModalChopSVG(matchingChop.svgType, matchingChop.accentColor.fill)}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between w-full text-[10px] font-mono font-bold text-zinc-500">
+                    <span>{matchingChop.countryCode}</span>
+                    <span>✦</span>
+                    <span>{matchingChop.date.split(" ")[0]}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-black text-zinc-950">{trip.destination}</h4>
+                  <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto font-medium">
+                    Congratulations! You completed this escape and unlocked the official{" "}
+                    <strong className="text-zinc-900">{matchingChop.name}</strong> stamp in your passport collection.
+                  </p>
+                </div>
+              </div>
+
+              {/* Details & Actions */}
+              <div className="px-6 pb-6 space-y-3">
+                <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200/70 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-zinc-500">
+                    <span>Coordinates</span>
+                    <span className="font-mono font-bold text-zinc-800">{matchingChop.coordinates}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-zinc-500">
+                    <span>Travel Party</span>
+                    <span className="font-bold text-zinc-800">
+                      {trip.members.map((m) => m.name).join(", ") || matchingChop.companions.join(", ")}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  {onViewChopInProfile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowChopCelebration(false);
+                        onViewChopInProfile();
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-[#963314] hover:bg-[#7d2b10] text-white font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      <span>View in Passport</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowChopCelebration(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         </AnimatePresence>,

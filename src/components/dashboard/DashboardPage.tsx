@@ -713,6 +713,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 setActiveChatTripId(tripId);
                 setCurrentNav("team");
               }}
+              onNavigateToProfile={() => setCurrentNav("profile")}
             />
           </motion.div>
         ) : currentNav === "team" ? (

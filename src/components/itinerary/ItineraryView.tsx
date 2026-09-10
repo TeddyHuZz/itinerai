@@ -19,6 +19,7 @@ import {
   Compass,
 } from "lucide-react";
 import { TripWorkspace } from "./TripWorkspace";
+import { isTripCompleted } from "../../services/chopStore";
 
 export interface TripItem {
   id: string;
@@ -27,7 +28,7 @@ export interface TripItem {
   startDate: string;
   endDate: string;
   image: string;
-  status: "Planning" | "Confirmed" | "Exploring";
+  status: "Planning" | "Confirmed" | "Exploring" | "Completed";
   members: {
     id: string;
     name: string;
@@ -269,13 +270,17 @@ export const getCrawledDestinationImage = (destination: string): string => {
 interface ItineraryViewProps {
   onNavigateToSearch?: (prefill?: { destination?: string; dates?: string }) => void;
   onNavigateToChat?: (tripId: string) => void;
+  onNavigateToProfile?: () => void;
 }
 
 export const ItineraryView: React.FC<ItineraryViewProps> = ({
   onNavigateToSearch,
   onNavigateToChat,
+  onNavigateToProfile,
 }) => {
-  const [trips, setTrips] = useState<TripItem[]>(INITIAL_TRIPS);
+  const [trips, setTrips] = useState<TripItem[]>(() =>
+    INITIAL_TRIPS.map((t) => (isTripCompleted(t.id) ? { ...t, status: "Completed" } : t))
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTrip, setSelectedTrip] = useState<TripItem | null>(null);
   const [activeTripWorkspace, setActiveTripWorkspace] = useState<TripItem | null>(null);
@@ -362,6 +367,11 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
           onNavigateToSearch={onNavigateToSearch}
           onNavigateToChat={onNavigateToChat}
           onCopyLink={copyShareLink}
+          onUpdateTrip={(updatedTrip) => {
+            setTrips((prev) => prev.map((t) => (t.id === updatedTrip.id ? updatedTrip : t)));
+            setActiveTripWorkspace(updatedTrip);
+          }}
+          onViewChopInProfile={onNavigateToProfile}
         />
 
         {/* Toast Notification */}
@@ -476,7 +486,13 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
 
               {/* Top Row: Status Badge & Share Button */}
               <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-xs">
+                <span
+                  className={`px-3 py-1 rounded-full text-[11px] font-extrabold backdrop-blur-md shadow-xs ${
+                    trip.status === "Completed"
+                      ? "bg-emerald-600/90 text-white border border-emerald-400/40"
+                      : "bg-black/50 border border-white/20 text-white"
+                  }`}
+                >
                   {trip.status}
                 </span>
 

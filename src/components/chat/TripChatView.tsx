@@ -930,16 +930,16 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                     {currentTrip?.status}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium mt-0.5">
-                  <span>{currentTrip?.dates}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-zinc-400 font-medium mt-0.5 flex-wrap">
+                  <span className="whitespace-nowrap">{currentTrip?.dates}</span>
                   <span>•</span>
-                  <span>{currentTrip?.members.length} companions</span>
+                  <span className="whitespace-nowrap">{currentTrip?.members.length} companions</span>
                 </div>
               </div>
             </div>
 
             {/* Right: Local WebGPU Indicator & Itinerary Action */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {/* Local WebLLM Badge */}
               <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-700">
                 <Cpu className="w-3.5 h-3.5 text-[#f15a24]" />
@@ -978,7 +978,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenItinerary(currentTrip)}
-                  className="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                   title="Open Day-by-Day Itinerary"
                 >
                   <Calendar className="w-3.5 h-3.5 text-amber-400" />
@@ -990,7 +990,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
           </div>
 
           {/* Messages Scroll Area */}
-          <div className="flex-1 p-4 sm:p-6 overflow-y-auto min-h-0 space-y-4 bg-zinc-50/40">
+          <div className="flex-1 p-2.5 sm:p-6 overflow-y-auto min-h-0 space-y-3 sm:space-y-4 bg-zinc-50/40">
             {currentChat.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-400">
                 <img
@@ -1032,9 +1032,13 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
 
                     {/* Message Bubble */}
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] flex flex-col ${
-                        isUser ? "items-end text-right" : "items-start text-left"
-                      }`}
+                      className={`flex flex-col ${
+                        msg.poll
+                          ? "w-full min-w-0"
+                          : isUser
+                          ? "max-w-[85%] sm:max-w-[75%]"
+                          : "max-w-[85%] sm:max-w-[75%]"
+                      } ${isUser ? "items-end text-right" : "items-start text-left"}`}
                     >
                       <div
                         className={`flex items-center gap-2 px-1 mb-1 text-[11px] font-medium text-zinc-400 ${
@@ -1062,7 +1066,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                         <motion.div
                           initial={{ opacity: 0, scale: 0.98, y: 5 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
-                          className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-3.5 sm:p-4 text-left space-y-3 mt-2"
+                          className="w-full bg-white rounded-2xl border border-zinc-200 shadow-sm p-2.5 sm:p-4 text-left space-y-2.5 sm:space-y-3 mt-2 overflow-hidden"
                         >
                           <div className="flex items-center justify-between gap-2 border-b border-zinc-100 pb-2.5">
                             <div>
@@ -1092,10 +1096,10 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                               return (
                                 <div
                                   key={opt.id}
-                                  className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200/80 hover:border-zinc-300 transition-all bg-zinc-50/50 gap-3 group"
+                                  className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl border border-zinc-200/80 hover:border-zinc-300 transition-all bg-zinc-50/50 gap-2 sm:gap-3 group w-full"
                                 >
                                   {/* Visual Place Thumbnail */}
-                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-zinc-200 shadow-2xs bg-zinc-100">
+                                  <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl overflow-hidden shrink-0 border border-zinc-200 shadow-2xs bg-zinc-100">
                                     <img
                                       src={spotImage}
                                       alt={opt.title}
@@ -1112,20 +1116,20 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
 
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-xs font-bold text-zinc-900 truncate">
+                                      <span className="text-xs font-bold text-zinc-900 truncate max-w-full">
                                         {opt.title}
                                       </span>
-                                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-zinc-200/80 text-zinc-700">
+                                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-zinc-200/80 text-zinc-700 shrink-0">
                                         {opt.category}
                                       </span>
                                       {opt.cost && (
-                                        <span className="text-[10px] font-medium text-zinc-500">
+                                        <span className="text-[10px] font-medium text-zinc-500 shrink-0">
                                           {opt.cost}
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-[10px] text-zinc-400 font-medium">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
+                                      <span className="text-[10px] text-zinc-400 font-medium truncate max-w-28 sm:max-w-none">
                                         {opt.voters.length > 0
                                           ? `Voted by: ${opt.voters.join(", ")}`
                                           : "No votes yet"}
@@ -1135,7 +1139,7 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                                         href={mapUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#963314] hover:underline cursor-pointer"
+                                        className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#963314] hover:underline cursor-pointer shrink-0"
                                         onClick={(e) => e.stopPropagation()}
                                         title={`Open ${opt.title} in Google Maps`}
                                       >
@@ -1145,12 +1149,12 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                                     </div>
                                   </div>
 
-                                  <div className="flex items-center gap-1.5 shrink-0">
+                                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                                     {/* Vote Button */}
                                     <button
                                       type="button"
                                       onClick={() => handleVote(msg.id, opt.id)}
-                                      className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                      className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                                         hasVoted
                                           ? "bg-amber-100 text-amber-900 border border-amber-300"
                                           : "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100"
@@ -1173,11 +1177,11 @@ export const TripChatView: React.FC<TripChatViewProps> = ({
                                             msg.poll?.targetDay || 2
                                           )
                                         }
-                                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#f15a24] hover:bg-[#e04812] text-white transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                        className="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold bg-[#f15a24] hover:bg-[#e04812] text-white transition-all cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
                                         title="Add this spot to the itinerary"
                                       >
                                         <Plus className="w-3 h-3" />
-                                        <span className="hidden sm:inline">Add</span>
+                                        <span className="text-[11px] sm:text-xs">Add</span>
                                       </button>
                                     )}
                                   </div>

@@ -53,6 +53,7 @@ import {
   type TransitLeg,
   type DayRouteStats,
 } from "../../services/routeOptimizer";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 export interface DayActivity {
   id: string;
@@ -401,6 +402,10 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   const [selectedDay, setSelectedDay] = useState<number | "all">("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Prevent background page scrolling when modals are open
+  useBodyScrollLock(isAddModalOpen, () => setIsAddModalOpen(false));
+  useBodyScrollLock(showChopCelebration, () => setShowChopCelebration(false));
+
   // New Activity Form State
   const [newTitle, setNewTitle] = useState("");
   const [newTime, setNewTime] = useState("10:00 AM");
@@ -520,16 +525,180 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   // Drag & Drop and Reordering States
   const [draggedActivityId, setDraggedActivityId] = useState<string | null>(null);
   const draggedActivityIdRef = useRef<string | null>(null);
+  const isTouchDraggingRef = useRef(false);
   const [dragOverTarget, setDragOverTarget] = useState<{
     id: string;
     position: "above" | "below";
   } | null>(null);
+  const dragOverTargetRef = useRef<{ id: string; position: "above" | "below" } | null>(null);
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
+  const dragOverDayRef = useRef<number | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  // Auto-scroll on Drag (smooth inertial edge scrolling)
+  const autoScrollFrameRef = useRef<number | null>(null);
+  const pointerPosRef = useRef<{ x: number; y: number } | null>(null);
+  const scrollVelocityRef = useRef<number>(0);
+  const lastHitTestTimeRef = useRef<number>(0);
+
+  const safeSetDragOverTarget = (target: { id: string; position: "above" | "below" } | null) => {
+    if (
+      dragOverTargetRef.current?.id === target?.id &&
+      dragOverTargetRef.current?.position === target?.position
+    ) {
+      return;
+    }
+    dragOverTargetRef.current = target;
+    setDragOverTarget(target);
+  };
+
+  const safeSetDragOverDay = (day: number | null) => {
+    if (dragOverDayRef.current === day) return;
+    dragOverDayRef.current = day;
+    setDragOverDay(day);
+  };
+
+  const updateDropTargetAtPoint = (clientX: number, clientY: number) => {
+    const currentDragged = draggedActivityIdRef.current;
+    if (!currentDragged) return;
+
+    const elem = document.elementFromPoint(clientX, clientY);
+    if (!elem) return;
+
+    // Check if over an activity card
+    const card = elem.closest('[data-activity-card="true"]') as HTMLElement | null;
+    if (card) {
+      const targetId = card.getAttribute("data-activity-id");
+      if (targetId && targetId !== currentDragged) {
+        const rect = card.getBoundingClientRect();
+        const relY = clientY - rect.top;
+        const height = rect.height;
+
+        // Hysteresis deadzone: prevents rapid flipping near the middle boundary
+        let position: "above" | "below";
+        if (dragOverTargetRef.current?.id === targetId) {
+          if (dragOverTargetRef.current.position === "above") {
+            position = relY > height * 0.58 ? "below" : "above";
+          } else {
+            position = relY < height * 0.42 ? "above" : "below";
+          }
+        } else {
+          position = relY < height * 0.5 ? "above" : "below";
+        }
+
+        safeSetDragOverTarget({ id: targetId, position });
+        safeSetDragOverDay(null);
+        return;
+      }
+    }
+
+    // Check if over a day section or header
+    const dayElem = elem.closest("[data-day-container]") as HTMLElement | null;
+    if (dayElem) {
+      const dayStr = dayElem.getAttribute("data-day-container");
+      const dayNum = dayStr ? parseInt(dayStr, 10) : null;
+      if (dayNum !== null && !isNaN(dayNum)) {
+        safeSetDragOverDay(dayNum);
+        safeSetDragOverTarget(null);
+      }
+    }
+  };
+
+  const startAutoScroll = () => {
+    if (autoScrollFrameRef.current !== null) return;
+    scrollVelocityRef.current = 0;
+
+    const scrollLoop = () => {
+      const isDragging = !!draggedActivityIdRef.current || isTouchDraggingRef.current;
+      if (!isDragging) {
+        stopAutoScroll();
+        return;
+      }
+
+      const pointer = pointerPosRef.current;
+      let targetVelocity = 0;
+
+      if (pointer) {
+        const topThreshold = 170;
+        const bottomThreshold = 170;
+        const windowHeight = window.innerHeight;
+        const y = pointer.y;
+
+        if (y < topThreshold && window.scrollY > 0) {
+          // Hovering near top: progressive acceleration up to ~50px/frame (~3,000px/s)
+          const ratio = Math.max(0, (topThreshold - y) / topThreshold);
+          const speed = 7 + Math.pow(ratio, 1.3) * 45;
+          targetVelocity = -Math.min(52, speed);
+        } else if (y > windowHeight - bottomThreshold) {
+          // Hovering near bottom: progressive acceleration downwards
+          const maxScroll = document.documentElement.scrollHeight - windowHeight;
+          if (window.scrollY < maxScroll) {
+            const ratio = Math.max(0, (y - (windowHeight - bottomThreshold)) / bottomThreshold);
+            const speed = 7 + Math.pow(ratio, 1.3) * 45;
+            targetVelocity = Math.min(52, speed);
+          }
+        }
+      }
+
+      // Snappy yet smooth velocity interpolation
+      scrollVelocityRef.current = scrollVelocityRef.current * 0.74 + targetVelocity * 0.26;
+      if (Math.abs(scrollVelocityRef.current) < 0.3) {
+        scrollVelocityRef.current = 0;
+      }
+
+      const scrollDelta = Math.round(scrollVelocityRef.current);
+      if (scrollDelta !== 0) {
+        window.scrollBy(0, scrollDelta);
+
+        // Throttle hit-testing to ~45ms during scrolling to maintain solid 60fps
+        const now = performance.now();
+        if (pointer && now - lastHitTestTimeRef.current > 45) {
+          lastHitTestTimeRef.current = now;
+          updateDropTargetAtPoint(pointer.x, pointer.y);
+        }
+      }
+
+      autoScrollFrameRef.current = requestAnimationFrame(scrollLoop);
+    };
+
+    autoScrollFrameRef.current = requestAnimationFrame(scrollLoop);
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollFrameRef.current !== null) {
+      cancelAnimationFrame(autoScrollFrameRef.current);
+      autoScrollFrameRef.current = null;
+    }
+    scrollVelocityRef.current = 0;
+    pointerPosRef.current = null;
+  };
+
+  // Global dragover/dragend listener for smooth edge scrolling on desktop
+  useEffect(() => {
+    const handleGlobalDragOver = (e: DragEvent) => {
+      if (draggedActivityIdRef.current) {
+        pointerPosRef.current = { x: e.clientX, y: e.clientY };
+      }
+    };
+
+    const handleGlobalDragEnd = () => {
+      stopAutoScroll();
+    };
+
+    window.addEventListener("dragover", handleGlobalDragOver);
+    window.addEventListener("dragend", handleGlobalDragEnd);
+    return () => {
+      window.removeEventListener("dragover", handleGlobalDragOver);
+      window.removeEventListener("dragend", handleGlobalDragEnd);
+      stopAutoScroll();
+    };
+  }, []);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     draggedActivityIdRef.current = id;
     setDraggedActivityId(id);
+    pointerPosRef.current = { x: e.clientX, y: e.clientY };
+    startAutoScroll();
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", id);
 
@@ -551,6 +720,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    pointerPosRef.current = { x: e.clientX, y: e.clientY };
     const currentDragged = draggedActivityIdRef.current || draggedActivityId;
     if (!currentDragged || currentDragged === id) return;
 
@@ -560,8 +730,8 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
 
     // Hysteresis deadzone: prevents rapid flipping near the middle boundary
     let position: "above" | "below";
-    if (dragOverTarget?.id === id) {
-      if (dragOverTarget.position === "above") {
+    if (dragOverTargetRef.current?.id === id) {
+      if (dragOverTargetRef.current.position === "above") {
         position = relY > height * 0.58 ? "below" : "above";
       } else {
         position = relY < height * 0.42 ? "above" : "below";
@@ -570,16 +740,77 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
       position = relY < height * 0.5 ? "above" : "below";
     }
 
-    if (!dragOverTarget || dragOverTarget.id !== id || dragOverTarget.position !== position) {
-      setDragOverTarget({ id, position });
-    }
+    safeSetDragOverTarget({ id, position });
   };
 
   const handleDragEnd = () => {
+    stopAutoScroll();
     draggedActivityIdRef.current = null;
+    isTouchDraggingRef.current = false;
     setDraggedActivityId(null);
-    setDragOverTarget(null);
-    setDragOverDay(null);
+    safeSetDragOverTarget(null);
+    safeSetDragOverDay(null);
+  };
+
+  // Touch Drag & Drop support for mobile devices
+  const handleTouchStart = (e: React.TouchEvent, id: string) => {
+    const touch = e.touches[0];
+    pointerPosRef.current = { x: touch.clientX, y: touch.clientY };
+    draggedActivityIdRef.current = id;
+    setDraggedActivityId(id);
+    isTouchDraggingRef.current = true;
+    startAutoScroll();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isTouchDraggingRef.current || !draggedActivityIdRef.current) return;
+    const touch = e.touches[0];
+    pointerPosRef.current = { x: touch.clientX, y: touch.clientY };
+    updateDropTargetAtPoint(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = () => {
+    stopAutoScroll();
+    if (!isTouchDraggingRef.current) return;
+    isTouchDraggingRef.current = false;
+    const sourceId = draggedActivityIdRef.current;
+
+    if (sourceId && dragOverTarget) {
+      const { id: targetId, position } = dragOverTarget;
+      if (sourceId !== targetId) {
+        setActivities((prev) => {
+          const sourceAct = prev.find((a) => a.id === sourceId);
+          if (!sourceAct) return prev;
+          const withoutSource = prev.filter((a) => a.id !== sourceId);
+          const targetIndex = withoutSource.findIndex((a) => a.id === targetId);
+          if (targetIndex === -1) return prev;
+          const targetAct = withoutSource[targetIndex];
+          const updatedSource = { ...sourceAct, day: targetAct.day };
+          const insertIndex = position === "above" ? targetIndex : targetIndex + 1;
+          const result = [...withoutSource];
+          result.splice(insertIndex, 0, updatedSource);
+          return result;
+        });
+      }
+    } else if (sourceId && dragOverDay !== null) {
+      const targetDay = dragOverDay;
+      setActivities((prev) => {
+        const sourceAct = prev.find((a) => a.id === sourceId);
+        if (!sourceAct) return prev;
+        const withoutSource = prev.filter((a) => a.id !== sourceId);
+        const firstTargetIndex = withoutSource.findIndex((a) => a.day === targetDay);
+        const updatedSource = { ...sourceAct, day: targetDay };
+        const result = [...withoutSource];
+        if (firstTargetIndex === -1) {
+          result.push(updatedSource);
+        } else {
+          result.splice(firstTargetIndex, 0, updatedSource);
+        }
+        return result;
+      });
+    }
+
+    handleDragEnd();
   };
 
   // Drop directly onto an activity (above or below)
@@ -762,37 +993,40 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 flex flex-col pb-28">
       {/* Top Breadcrumb & Navigation Bar */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 mb-4">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer group"
+          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer group shrink-0"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Escapes</span>
+          <span className="hidden sm:inline">Back to Escapes</span>
+          <span className="sm:hidden">Escapes</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {onNavigateToChat && (
             <button
               type="button"
               onClick={() => onNavigateToChat(trip.id)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer group active:scale-95"
+              className="relative flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer group active:scale-95 shrink-0"
               title={`Open group chat for ${trip.destination}`}
+              aria-label="Trip Chat"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-[#f15a24]" />
-              <span>Trip Chat</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#f15a24]" />
+              <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[#f15a24]" />
+              <span className="hidden sm:inline">Trip Chat</span>
+              <span className="absolute top-1 right-1 sm:static sm:top-auto sm:right-auto w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-[#f15a24]" />
             </button>
           )}
 
           <button
             type="button"
             onClick={() => onCopyLink(trip)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer shrink-0"
             title="Invite travel companions"
+            aria-label="Invite Friends"
           >
-            <Share2 className="w-3.5 h-3.5 text-[#f15a24]" />
+            <Share2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[#f15a24]" />
             <span className="hidden sm:inline">Invite Friends</span>
           </button>
 
@@ -803,11 +1037,12 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
               whileTap={{ scale: 0.95 }}
               type="button"
               onClick={handleCompleteTrip}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer group active:scale-95"
+              className="flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer group active:scale-95 shrink-0"
               title="Trip date has ended! Click to complete trip and unlock location badge"
+              aria-label="Complete Trip"
             >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Complete Trip</span>
+              <CheckCircle2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden sm:inline">Complete Trip</span>
             </motion.button>
           )}
 
@@ -815,10 +1050,11 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
             <button
               type="button"
               onClick={() => setShowChopCelebration(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 shadow-2xs transition-all cursor-pointer"
+              className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 shadow-2xs transition-all cursor-pointer shrink-0"
               title="Trip completed! Click to view your unlocked location chop badge"
+              aria-label="Chop Unlocked"
             >
-              <Award className="w-3.5 h-3.5 text-emerald-600" />
+              <Award className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">Chop Unlocked</span>
             </button>
           )}
@@ -832,11 +1068,12 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                   dates: trip.dates,
                 })
               }
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 shadow-xs transition-all cursor-pointer group active:scale-95"
+              className="flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 shadow-xs transition-all cursor-pointer group active:scale-95 shrink-0"
               title={`Search flights and hotels for ${trip.destination}`}
+              aria-label="Search Flights & Stays"
             >
-              <Plane className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
-              <span>Search Flights &amp; Stays</span>
+              <Plane className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+              <span className="hidden sm:inline">Search Flights &amp; Stays</span>
             </button>
           )}
         </div>
@@ -844,7 +1081,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
 
       {/* Hero Header Card */}
       <div className="relative rounded-3xl overflow-hidden border border-zinc-200 shadow-sm mb-6 bg-zinc-950 text-white">
-        <div className="h-44 sm:h-56 w-full relative">
+        <div className="h-40 sm:h-56 w-full relative">
           <img
             src={trip.image}
             alt={trip.destination}
@@ -920,68 +1157,73 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left / Main Column: Day Tabs & Timeline */}
         <div className="w-full lg:flex-1 space-y-4">
-          {/* Day Filter Tabs */}
-          <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 no-scrollbar">
-            <div className="flex items-center gap-1.5 bg-white p-1 rounded-2xl border border-zinc-200 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setSelectedDay("all")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  selectedDay === "all"
-                    ? "bg-[#963314] text-white shadow-xs"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-                }`}
-              >
-                All Days ({activities.length})
-              </button>
+          {/* Day Filter Tabs & Add Activity CTA */}
+          <div className="flex items-center gap-2">
+            {/* Scrollable Day Tabs */}
+            <div className="flex-1 overflow-x-auto no-scrollbar py-0.5 min-w-0">
+              <div className="inline-flex w-max min-w-max items-center gap-1.5 bg-white p-1 rounded-2xl border border-zinc-200 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDay("all")}
+                  className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                    selectedDay === "all"
+                      ? "bg-[#963314] text-white shadow-xs"
+                      : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                  }`}
+                >
+                  All Days ({activities.length})
+                </button>
 
-              {availableDays.map((d) => {
-                const count = activities.filter((a) => a.day === d).length;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setSelectedDay(d)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      selectedDay === d
-                        ? "bg-[#963314] text-white shadow-xs"
-                        : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-                    }`}
-                  >
-                    <span>Day {d}</span>
-                    {count > 0 && (
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                          selectedDay === d
-                            ? "bg-white/25 text-white"
-                            : "bg-zinc-200 text-zinc-600"
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                {availableDays.map((d) => {
+                  const count = activities.filter((a) => a.day === d).length;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSelectedDay(d)}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+                        selectedDay === d
+                          ? "bg-[#963314] text-white shadow-xs"
+                          : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                      }`}
+                    >
+                      <span>Day {d}</span>
+                      {count > 0 && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                            selectedDay === d
+                              ? "bg-white/25 text-white"
+                              : "bg-zinc-200 text-zinc-600"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Add Activity CTA Button */}
+            {/* Add Activity CTA Button - pinned on the right, never clipped */}
             <button
               type="button"
               onClick={() => {
                 setNewDay(typeof selectedDay === "number" ? selectedDay : 1);
                 setIsAddModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#f15a24] hover:bg-[#e04812] text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2 rounded-xl bg-[#f15a24] hover:bg-[#e04812] text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+              title="Add Activity"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Activity</span>
+              <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden sm:inline">Add Activity</span>
+              <span className="sm:hidden">Add</span>
             </button>
           </div>
 
           {/* Feature C: AI Route Efficiency & Sequence Optimizer Bar */}
           {displayedActivities.length > 1 && (
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-linear-to-r from-zinc-900 via-zinc-900 to-zinc-950 text-white shadow-md border border-zinc-800 space-y-3">
+            <div className="p-3 sm:p-4 rounded-2xl bg-linear-to-r from-zinc-900 via-zinc-900 to-zinc-950 text-white shadow-md border border-zinc-800 space-y-2.5 sm:space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   {/* Efficiency Badge */}
@@ -1160,6 +1402,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                       layout={!draggedActivityId}
                       layoutId={`act-card-${act.id}`}
                       data-activity-card="true"
+                      data-activity-id={act.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{
                         opacity: isDraggingThis ? 0.3 : 1,
@@ -1215,12 +1458,16 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                             draggable
                             onDragStart={(e) => handleDragStart(e, act.id)}
                             onDragEnd={handleDragEnd}
-                            className="p-1 text-zinc-300 hover:text-zinc-700 cursor-grab active:cursor-grabbing rounded-md hover:bg-zinc-100 transition-colors"
+                            onTouchStart={(e) => handleTouchStart(e, act.id)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            style={{ touchAction: "none" }}
+                            className="p-1.5 sm:p-1 text-zinc-400 hover:text-zinc-700 cursor-grab active:cursor-grabbing rounded-md hover:bg-zinc-100 transition-colors touch-none"
                             title="Drag to reorder activity"
                           >
                             <GripVertical className="w-4 h-4" />
                           </div>
-                          <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity -space-y-0.5 mt-0.5">
+                          <div className="flex flex-col opacity-75 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity -space-y-0.5 mt-0.5">
                             <button
                               type="button"
                               disabled={isFirstInDay}
@@ -1228,7 +1475,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                                 e.stopPropagation();
                                 moveActivityWithinDay(act.id, "up");
                               }}
-                              className="p-0.5 text-zinc-400 hover:text-zinc-800 disabled:opacity-20 disabled:hover:text-zinc-400 cursor-pointer active:scale-75 transition-transform"
+                              className="p-1 sm:p-0.5 text-zinc-400 hover:text-zinc-800 disabled:opacity-20 disabled:hover:text-zinc-400 cursor-pointer active:scale-75 transition-transform"
                               title="Move up"
                             >
                               <ChevronUp className="w-3.5 h-3.5" />
@@ -1240,7 +1487,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                                 e.stopPropagation();
                                 moveActivityWithinDay(act.id, "down");
                               }}
-                              className="p-0.5 text-zinc-400 hover:text-zinc-800 disabled:opacity-20 disabled:hover:text-zinc-400 cursor-pointer active:scale-75 transition-transform"
+                              className="p-1 sm:p-0.5 text-zinc-400 hover:text-zinc-800 disabled:opacity-20 disabled:hover:text-zinc-400 cursor-pointer active:scale-75 transition-transform"
                               title="Move down"
                             >
                               <ChevronDown className="w-3.5 h-3.5" />
@@ -1346,7 +1593,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                                   }}
                                 />
                                 <div
-                                  className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-2xl shadow-xl border border-zinc-200/90 py-2 z-40 text-left animate-in fade-in zoom-in-95 duration-100"
+                                  className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 w-52 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-xl border border-zinc-200/90 py-2 z-40 text-left animate-in fade-in zoom-in-95 duration-100"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <div className="px-3 pb-1 text-[10px] font-black uppercase text-zinc-400 tracking-wider">
@@ -1487,6 +1734,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                         return (
                           <div
                             key={`day-group-${dayNum}`}
+                            data-day-container={dayNum}
                             onDragOver={(e) => {
                               e.preventDefault();
                               e.dataTransfer.dropEffect = "move";
@@ -1510,6 +1758,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                       return (
                         <div
                           key={`day-group-${dayNum}`}
+                          data-day-container={dayNum}
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.dataTransfer.dropEffect = "move";
@@ -1519,6 +1768,7 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
                         >
                           {/* Day Section Header */}
                           <div
+                            data-day-container={dayNum}
                             onDragOver={(e) => {
                               e.preventDefault();
                               e.dataTransfer.dropEffect = "move";
@@ -1757,14 +2007,18 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
       {/* ======================================================================= */}
       {isAddModalOpen && typeof document !== "undefined" && createPortal(
         <AnimatePresence>
-          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm">
-            <div className="absolute inset-0" onClick={() => setIsAddModalOpen(false)} />
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm overscroll-contain">
+            <div
+              className="absolute inset-0"
+              onClick={() => setIsAddModalOpen(false)}
+              onTouchMove={(e) => e.preventDefault()}
+            />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-zinc-200 overflow-hidden z-10 flex flex-col"
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-zinc-200 overflow-y-auto max-h-[90vh] overscroll-contain z-10 flex flex-col"
             >
               <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
                 <div>

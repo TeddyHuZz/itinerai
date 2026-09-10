@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { TripWorkspace } from "./TripWorkspace";
 import { isTripCompleted } from "../../services/chopStore";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 export interface TripItem {
   id: string;
@@ -289,6 +290,11 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
   const [activeTripWorkspace, setActiveTripWorkspace] = useState<TripItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Prevent background scrolling when modals are open
+  useBodyScrollLock(isCreateModalOpen, () => setIsCreateModalOpen(false));
+  useBodyScrollLock(!!selectedTrip, () => setSelectedTrip(null));
+
   const [toastNotice, setToastNotice] = useState<{
     message: string;
     isDelete?: boolean;
@@ -558,18 +564,6 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
             </span>
           </button>
         </div>
-
-        {filterTab === "completed" && onNavigateToProfile && (
-          <button
-            type="button"
-            onClick={onNavigateToProfile}
-            className="text-xs font-bold text-[#963314] hover:text-[#78280f] flex items-center gap-1.5 cursor-pointer transition-colors bg-orange-50/80 px-3 py-1.5 rounded-xl border border-orange-200/70"
-          >
-            <Award className="w-3.5 h-3.5 text-[#963314]" />
-            <span>Passport Booklet</span>
-            <ChevronRight className="w-3 h-3 text-[#963314]" />
-          </button>
-        )}
       </div>
 
       {/* Trips Content */}
@@ -766,26 +760,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
               </div>
             );
           }
-          return (
-            <div className="space-y-5">
-              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                    <Award className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-emerald-950">
-                      {completedTrips.length} Completed {completedTrips.length === 1 ? "Escape" : "Escapes"} Archived
-                    </h4>
-                    <p className="text-[11px] text-emerald-800/80">
-                      All travel chops are stamped in your passport collection. Click any card to view memories or reopen.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {viewMode === "grid" ? renderGrid(completedTrips) : renderLine(completedTrips)}
-            </div>
-          );
+          return viewMode === "grid" ? renderGrid(completedTrips) : renderLine(completedTrips);
         }
 
         // CASE 3: ALL ESCAPES (Active on top, Completed stored below!)
@@ -837,10 +812,11 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
       {/* ======================================================================= */}
       {isCreateModalOpen && typeof document !== "undefined" && createPortal(
         <AnimatePresence>
-          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm overscroll-contain">
             <div
               className="absolute inset-0"
               onClick={() => setIsCreateModalOpen(false)}
+              onTouchMove={(e) => e.preventDefault()}
             />
 
             <motion.div
@@ -957,13 +933,14 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
       {/* ======================================================================= */}
       {selectedTrip && typeof document !== "undefined" && createPortal(
         <AnimatePresence>
-          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/70 backdrop-blur-sm overscroll-contain">
             <div
               className="absolute inset-0"
               onClick={() => {
                 setSelectedTrip(null);
                 setShowDeleteConfirm(false);
               }}
+              onTouchMove={(e) => e.preventDefault()}
             />
 
             <motion.div
@@ -1121,25 +1098,27 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
                     </div>
                   </motion.div>
                 ) : (
-                  <div className="w-full flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
+                  <div className="w-full flex items-center justify-between gap-2.5 sm:gap-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedTrip(null);
                           setShowDeleteConfirm(false);
                         }}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-600 hover:bg-zinc-200/60 transition-colors cursor-pointer"
+                        className="hidden sm:inline-block px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-600 hover:bg-zinc-200/60 transition-colors cursor-pointer"
                       >
                         Close
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-100/70 hover:text-rose-700 transition-colors flex items-center gap-1.5 cursor-pointer group"
+                        aria-label="Delete Trip"
+                        title="Delete Trip"
+                        className="p-2.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-100/70 hover:text-rose-700 transition-colors flex items-center gap-1.5 cursor-pointer group shrink-0"
                       >
-                        <Trash2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                        <span>Delete Trip</span>
+                        <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">Delete Trip</span>
                       </button>
                     </div>
 
@@ -1152,7 +1131,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
                         setShowDeleteConfirm(false);
                         setActiveTripWorkspace(tripToOpen);
                       }}
-                      className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
+                      className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95 text-center min-w-0"
                     >
                       {selectedTrip.status === "Completed" ? (
                         <>

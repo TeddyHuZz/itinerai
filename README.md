@@ -109,9 +109,17 @@ Group members plan trips together in a shared workspace where they can `@mention
 
 ### 2.2 Ideation Boards
 
-Our team used collaborative brainstorming to map out the user journey and decide which features to prioritize based on **impact vs. effort**:
+Our team used collaborative brainstorming to map out the problem space, explore ideas, and converge on the final solution. Below are the artifacts from our ideation process:
 
-**User Journey Flow:**
+**Brainstorming Mindmap — Exploring the Problem & Ideas:**
+
+![Ideation Mindmap](docs/assets/ideation_mindmap.jpg)
+
+**Problem Tree Analysis — Root Cause → Effects → Solutions:**
+
+![Problem Tree Analysis](docs/assets/problem_tree.jpg)
+
+**User Journey Flow — End-to-End Experience Design:**
 
 ![ItinerAI User Journey Flow](docs/assets/user_flow_diagram.jpg)
 

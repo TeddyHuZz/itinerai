@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -34,6 +34,8 @@ import {
   MoreVertical,
   ChevronRight,
   Moon,
+  Search,
+  Loader2,
 } from "lucide-react";
 import type { TripItem } from "./ItineraryView";
 import {
@@ -43,6 +45,7 @@ import {
   getChopForTrip,
 } from "../../services/chopStore";
 import { renderModalChopSVG } from "../profile/UserProfileView";
+import { searchPlaces, type PlaceSearchResult } from "../../services/placeSearchService";
 import {
   calculateDayRouteStats,
   optimizeDayActivities,
@@ -408,6 +411,47 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
   const [newDay, setNewDay] = useState<number>(1);
   const [newCost, setNewCost] = useState("");
 
+  // Place Search & Google Autofill State
+  const [placeSearchQuery, setPlaceSearchQuery] = useState("");
+  const [placeSearchResults, setPlaceSearchResults] = useState<PlaceSearchResult[]>([]);
+  const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+  const [showPlaceDropdown, setShowPlaceDropdown] = useState(false);
+  const [autofilledPlace, setAutofilledPlace] = useState<PlaceSearchResult | null>(null);
+
+  useEffect(() => {
+    if (!placeSearchQuery.trim() || placeSearchQuery.trim().length < 2) {
+      setPlaceSearchResults([]);
+      setIsSearchingPlaces(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingPlaces(true);
+      try {
+        const results = await searchPlaces(placeSearchQuery, trip.destination);
+        setPlaceSearchResults(results);
+      } catch {
+        setPlaceSearchResults([]);
+      } finally {
+        setIsSearchingPlaces(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [placeSearchQuery, trip.destination]);
+
+  const handleSelectPlace = (place: PlaceSearchResult) => {
+    setNewTitle(place.name);
+    setNewLocation(place.location);
+    setNewCategory(place.category);
+    setNewPeriod(place.period);
+    setNewTime(place.time);
+    if (place.estimatedCost) setNewCost(place.estimatedCost);
+    if (place.notes) setNewNotes(place.notes);
+    setAutofilledPlace(place);
+    setShowPlaceDropdown(false);
+  };
+
   // Determine available day numbers (default to 3 days or max day found)
   const maxDay = Math.max(3, ...activities.map((a) => a.day));
   const availableDays = Array.from({ length: maxDay }, (_, i) => i + 1);
@@ -710,6 +754,9 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
     setNewTitle("");
     setNewNotes("");
     setNewCost("");
+    setAutofilledPlace(null);
+    setShowPlaceDropdown(false);
+    setPlaceSearchQuery("");
   };
 
   return (
@@ -1736,19 +1783,125 @@ export const TripWorkspace: React.FC<TripWorkspaceProps> = ({
               </div>
 
               <form onSubmit={handleAddActivity} className="p-6 space-y-4">
-                {/* Activity Name */}
+                {/* Activity Name with Google Places Autocomplete */}
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1.5">
-                    Activity / Place Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="e.g. Traditional Tea House Ceremony or Sunset Kayaking"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 focus:border-[#963314] focus:ring-2 focus:ring-[#963314]/10 text-sm font-semibold outline-none transition-all"
-                  />
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                      Activity / Place Name *
+                    </label>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={newTitle}
+                      onChange={(e) => {
+                        setNewTitle(e.target.value);
+                        setPlaceSearchQuery(e.target.value);
+                        setShowPlaceDropdown(true);
+                        if (autofilledPlace && e.target.value !== autofilledPlace.name) {
+                          setAutofilledPlace(null);
+                        }
+                      }}
+                      onFocus={() => {
+                        if (placeSearchResults.length > 0 || newTitle.length >= 2) {
+                          setShowPlaceDropdown(true);
+                        }
+                      }}
+                      placeholder="Type place name (e.g. Fushimi Inari, Kinkaku-ji, Gion)..."
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-zinc-200 focus:border-[#963314] focus:ring-2 focus:ring-[#963314]/10 text-sm font-semibold outline-none transition-all shadow-2xs"
+                    />
+                    <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-3 pointer-events-none" />
+
+                    {isSearchingPlaces ? (
+                      <Loader2 className="w-4 h-4 text-[#963314] absolute right-3 top-3 animate-spin pointer-events-none" />
+                    ) : newTitle ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewTitle("");
+                          setPlaceSearchQuery("");
+                          setAutofilledPlace(null);
+                          setShowPlaceDropdown(false);
+                        }}
+                        className="w-4 h-4 text-zinc-400 hover:text-zinc-600 absolute right-3 top-3 cursor-pointer"
+                        title="Clear"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    ) : null}
+
+                    {/* Google & Places Search Dropdown */}
+                    {showPlaceDropdown && (placeSearchResults.length > 0 || isSearchingPlaces) && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-zinc-200/90 z-50 overflow-hidden divide-y divide-zinc-100 max-h-64 overflow-y-auto">
+                        <div className="px-3.5 py-1.5 bg-zinc-50 flex items-center justify-between text-[10px] font-black uppercase text-zinc-500 tracking-wider">
+                          <span className="flex items-center gap-1.5 text-zinc-700">
+                            <MapPin className="w-3 h-3 text-[#963314]" />
+                            <span>Places in {trip.destination.split(",")[0]}</span>
+                          </span>
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                            Click to Autofill
+                          </span>
+                        </div>
+
+                        {placeSearchResults.map((place) => (
+                          <button
+                            key={place.id}
+                            type="button"
+                            onClick={() => handleSelectPlace(place)}
+                            className="w-full px-3.5 py-2.5 text-left hover:bg-orange-50/60 flex items-start justify-between gap-3 transition-colors cursor-pointer group"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-black text-zinc-900 group-hover:text-[#963314] transition-colors truncate">
+                                  {place.name}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                                {place.location}
+                              </p>
+                              {place.notes && (
+                                <p className="text-[10px] text-zinc-400 italic truncate mt-0.5">
+                                  💡 {place.notes}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 group-hover:bg-orange-100 group-hover:text-orange-900 transition-colors">
+                                {place.category}
+                              </span>
+                              {place.estimatedCost && (
+                                <span className="text-[10px] font-medium text-zinc-500">
+                                  {place.estimatedCost.split("/")[0]}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Autofilled Success Banner */}
+                  {autofilledPlace && (
+                    <div className="mt-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-xl flex items-center justify-between gap-2 text-xs text-emerald-900 animate-in fade-in duration-150">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="font-semibold truncate">
+                          Autofilled details from Google Places: Category, Location, Cost &amp; Tips
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAutofilledPlace(null)}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-950 underline shrink-0 cursor-pointer"
+                      >
+                        Edit fields
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Day and Time Row */}
